@@ -90,7 +90,7 @@ export class HanashiteTsukurunStack extends cdk.Stack {
     this.lambdaFunction = new lambda.Function(this, 'SlideApiHandler', {
       functionName: `${stackName}-slide-api-handler`,
       runtime: lambda.Runtime.PYTHON_3_13,
-      handler: 'handler.handler',
+      handler: 'handler.lambda_handler',
       code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda')),
       timeout: cdk.Duration.seconds(30),
       environment: {
