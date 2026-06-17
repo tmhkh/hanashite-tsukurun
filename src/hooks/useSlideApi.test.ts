@@ -7,6 +7,22 @@ import type { SlideApiRequest, SlideApiResponse } from '../types/index'
 // slideApiService をモック
 vi.mock('../services/slideApiService')
 
+// AuthContext をモック
+const mockGetToken = vi.fn(() => 'mock-token')
+const mockLogout = vi.fn()
+vi.mock('../contexts/AuthContext', () => ({
+  useAuth: () => ({
+    getToken: mockGetToken,
+    logout: mockLogout,
+    isAuthenticated: true,
+    isLoading: false,
+    idToken: 'mock-token',
+    error: null,
+    login: vi.fn(),
+    loginWithPasskey: vi.fn(),
+  }),
+}))
+
 const mockRequest: SlideApiRequest = {
   grade: 'grade1',
   current_step: 1,
@@ -26,6 +42,7 @@ const mockResponse: SlideApiResponse = {
 describe('useSlideApi', () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    mockGetToken.mockReturnValue('mock-token')
   })
 
   it('初期状態は loading=false, error=null', () => {
@@ -134,7 +151,7 @@ describe('useSlideApi', () => {
     expect(result.current.error).toBeNull()
   })
 
-  it('callSlideApi が正しい引数で呼ばれる', async () => {
+  it('callSlideApi が正しい引数で呼ばれる（トークン付き）', async () => {
     vi.mocked(slideApiService.callSlideApi).mockResolvedValue(mockResponse)
 
     const { result } = renderHook(() => useSlideApi())
@@ -143,7 +160,7 @@ describe('useSlideApi', () => {
       await result.current.call(mockRequest)
     })
 
-    expect(slideApiService.callSlideApi).toHaveBeenCalledWith(mockRequest)
+    expect(slideApiService.callSlideApi).toHaveBeenCalledWith(mockRequest, 'mock-token')
     expect(slideApiService.callSlideApi).toHaveBeenCalledTimes(1)
   })
 })

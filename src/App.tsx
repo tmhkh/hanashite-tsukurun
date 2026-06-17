@@ -3,6 +3,8 @@ import type { Grade, SlideData, HistoryEntry } from './types/index';
 import GradeSelector from './components/GradeSelector/GradeSelector';
 import { MainScreen } from './components/MainScreen/MainScreen';
 import { FinishScreen } from './components/FinishScreen/FinishScreen';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { LoginScreen } from './components/LoginScreen/LoginScreen';
 
 /**
  * アプリ画面区分
@@ -18,17 +20,35 @@ export const MAX_HISTORY_SIZE = 20;
 /**
  * App ルートコンポーネント
  *
- * AppState に基づいて GradeSelector・MainScreen・FinishScreen を切り替える。
- * - アプリ起動時は常に grade_select からスタート（要件 1.1, 1.7）
- * - grade 選択 → main 遷移（要件 1.3, 1.4）
- * - Step 3 完了（onComplete コールバック）→ finish 遷移（要件 7.4）
- * - 「もう一度つくる」→ grade_select 遷移（要件 7.4）
- * - メイン画面から学年を選び直す操作（onChangeGrade）で grade_select に戻る（要件 1.6）
- * - grade_select 遷移時に history を [] に初期化する（要件 8.5）
+ * AuthProvider でラップし、認証状態に基づいてコンテンツを切り替える。
+ * - 未認証時は LoginScreen を表示し、Grade_Selector 以降へのアクセスを遮断（要件 2.1）
+ * - 認証済み時はログアウトボタンを表示（要件 7.3）
+ * - ログアウト時にトークン破棄と LoginScreen 遷移（要件 7.4）
+ * - VITE_MOCK_MODE=true の場合は認証スキップ（要件 8.1）
  *
- * Requirements: 1.1, 1.3, 1.4, 1.6, 1.7, 7.4, 8.1, 8.2, 8.3, 8.4, 8.5
+ * Requirements: 2.1, 7.3, 7.4, 8.1
  */
 export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+/**
+ * AppContent — 認証ガード付きアプリコンテンツ
+ *
+ * useAuth() で認証状態を確認し、コンテンツの表示を制御する。
+ * - isLoading: ローディング表示
+ * - 未認証: LoginScreen 表示（Grade_Selector 以降へのアクセス遮断）
+ * - 認証済み: 既存の画面ルーティング + ログアウトボタン
+ *
+ * Requirements: 2.1, 7.3, 7.4
+ */
+function AppContent() {
+  const { isAuthenticated, isLoading, logout } = useAuth();
+
   /** 現在の画面 */
   const [screen, setScreen] = useState<Screen>('grade_select');
 
@@ -101,10 +121,46 @@ export default function App() {
     setScreen('finish');
   }, []);
 
-  // --- 画面ルーティング ---
+  // --- ローディング中 ---
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <p>読み込み中...</p>
+      </div>
+    );
+  }
 
+  // --- 未認証: LoginScreen を表示し、Grade_Selector 以降へのアクセスを遮断 ---
+  // Requirements: 2.1
+  if (!isAuthenticated) {
+    return <LoginScreen onLoginSuccess={() => {}} />;
+  }
+
+  // --- 認証済み: 既存の画面ルーティング + ログアウトボタン ---
   return (
     <div>
+      {/* ログアウトボタン — 認証済み時に常に表示（Requirement 7.3, 7.4） */}
+      <button
+        onClick={logout}
+        style={{
+          position: 'fixed',
+          top: '12px',
+          right: '12px',
+          zIndex: 1000,
+          padding: '8px 16px',
+          fontSize: '14px',
+          borderRadius: '8px',
+          border: '2px solid #e74c3c',
+          backgroundColor: '#ffffff',
+          color: '#e74c3c',
+          cursor: 'pointer',
+          fontWeight: 'bold',
+        }}
+        aria-label="ログアウト"
+      >
+        ログアウト
+      </button>
+
       {screen === 'grade_select' && (
         <GradeSelector onSelect={handleGradeSelect} />
       )}

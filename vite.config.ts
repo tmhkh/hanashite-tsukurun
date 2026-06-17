@@ -7,11 +7,14 @@ import basicSsl from '@vitejs/plugin-basic-ssl'
 export default defineConfig({
   plugins: [react(), basicSsl()],
   server: {
-    https: true,
+    https: true as any,
   },
   test: {
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
+    env: {
+      VITE_MOCK_MODE: 'true',
+    },
   },
 })

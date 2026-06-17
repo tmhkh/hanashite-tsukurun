@@ -18,15 +18,17 @@ POST /api/create-slide を処理し、Amazon Bedrock（Claude）を呼び出し�
 from __future__ import annotations
 
 import json
+import os
 from typing import Any
 
 from bedrock_client import invoke_claude
 from kanji_filter import get_kanji_instruction
+from rate_limiter import check_and_increment
 from script_generator import build_script_prompt_suffix
 from validator import validate_request
 
-# デフォルトモデル ID
-DEFAULT_MODEL_ID = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+# デフォルトモデル ID（環境変数から読み取り、未設定時は Claude 3 Haiku をデフォルトとする）
+DEFAULT_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-haiku-4-5-20251001-v1:0")
 
 # 全レスポンスに付与する CORS ヘッダー
 CORS_HEADERS: dict[str, str] = {
@@ -142,7 +144,18 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         {"role": "user", "content": user_speech}
     ]
 
-    # 7. Bedrock（Claude）を呼び出す
+    # 7. Bedrock 月次呼び出し回数チェック
+    try:
+        allowed, count = check_and_increment()
+        if not allowed:
+            return _make_response(429, {
+                "error": f"月次 Bedrock 呼び出し上限（{count}回）に達しました。来月まで利用できません。"
+            })
+    except Exception as exc:
+        # レートリミットチェック失敗時は安全側に倒してブロック
+        return _make_response(500, {"error": f"Rate limit check failed: {str(exc)}"})
+
+    # 8. Bedrock（Claude）を呼び出す
     model_id = DEFAULT_MODEL_ID
     try:
         slide_response = invoke_claude(
@@ -151,9 +164,9 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             model_id=model_id,
         )
     except Exception as exc:
-        # 8. Bedrock エラー時は HTTP 500
+        # 9. Bedrock エラー時は HTTP 500
         error_detail = str(exc)
         return _make_response(500, {"error": error_detail})
 
-    # 9. 成功レスポンス（CORS ヘッダー付き）
+    # 10. 成功レスポンス（CORS ヘッダー付き）
     return _make_response(200, slide_response)

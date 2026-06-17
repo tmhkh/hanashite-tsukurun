@@ -164,12 +164,12 @@ class TestSuccessfulRequest:
 
     @patch("handler.invoke_claude", return_value=MOCK_SLIDE_RESPONSE)
     def test_bedrock_called_with_correct_model_id(self, mock_invoke):
-        """デフォルトモデル ID が使用される。"""
+        """デフォルトモデル ID（環境変数未設定時は Claude 3 Haiku）が使用される。"""
         event = _make_event(VALID_BODY)
         lambda_handler(event, None)
         call_kwargs = mock_invoke.call_args
-        assert call_kwargs.kwargs.get("model_id") == "anthropic.claude-3-5-sonnet-20241022-v2:0" or \
-               call_kwargs.args[2] == "anthropic.claude-3-5-sonnet-20241022-v2:0"
+        assert call_kwargs.kwargs.get("model_id") == "anthropic.claude-3-haiku-20240307-v1:0" or \
+               call_kwargs.args[2] == "anthropic.claude-3-haiku-20240307-v1:0"
 
     @patch("handler.invoke_claude", return_value=MOCK_SLIDE_RESPONSE)
     def test_messages_include_history_and_user_speech(self, mock_invoke):
