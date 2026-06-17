@@ -19,8 +19,6 @@ def build_script_prompt_suffix(current_step: int) -> str:
         指示するプロンプト文字列。
     """
     if current_step == 3:
-        return (
-            "また、scriptフィールドに100文字以上400文字以内の発表用スピーチ台本を生成してください。"
-        )
+        return ""
     else:
         return 'scriptフィールドは必ず空文字列 "" にしてください。'

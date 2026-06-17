@@ -28,7 +28,7 @@ from script_generator import build_script_prompt_suffix
 from validator import validate_request
 
 # デフォルトモデル ID（環境変数から読み取り、未設定時は Claude 3 Haiku をデフォルトとする）
-DEFAULT_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-haiku-4-5-20251001-v1:0")
+DEFAULT_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "jp.anthropic.claude-haiku-4-5-20251001-v1:0")
 
 # 全レスポンスに付与する CORS ヘッダー
 CORS_HEADERS: dict[str, str] = {
@@ -70,30 +70,49 @@ def _build_system_prompt(
     kanji_instruction = get_kanji_instruction(grade)
     script_suffix = build_script_prompt_suffix(current_step)
 
+    # 次のステップ値を決定（サーバー側で確定）
+    next_step_value = current_step + 1 if current_step < 3 else 4
+
     # ステップ別の指示
     step_instructions = {
-        1: "タイトルについて子どもに質問してください。発表のテーマや話したいことを引き出してください。",
-        2: "内容について子どもに質問してください。具体的なエピソードや詳細を引き出してください。",
-        3: "これまでの会話をまとめ、発表台本を生成してください。",
+        1: (
+            "子どもが発表テーマを話しました。"
+            "slide_titleにテーマを入れてください。"
+            "ai_response_voiceで、子どもの発言を受け止めつつ、次のステップ（内容の詳細）で何を話せばよいかを"
+            "優しく丁寧に案内してください。例：「いいテーマだね！つぎは、そのテーマについて、どんなことをしたか・見たか・感じたかを教えてね」"
+        ),
+        2: (
+            "子どもがテーマの詳細を話しました。"
+            "slide_textに内容をまとめてください。"
+            "ai_response_voiceで、子どもの発言をほめつつ、これからまとめに入ることを伝えてください。"
+            "例：「すごいね！それはとっても大切なことだね。これまでのことをまとめてはっぴょう台本を作るよ！」"
+        ),
+        3: (
+            "最終ステップです。これまでの会話をまとめて発表台本を作ります。"
+            "slide_titleに「まとめ」と入れてください。"
+            "scriptフィールドに100文字以上400文字以内の発表台本を書いてください。"
+            "ai_response_voiceに完成メッセージを入れてください。"
+            "例：「すばらしいはっぴょうができたよ！みんなにじょうずに伝えてね！」"
+        ),
     }
     step_instruction = step_instructions.get(current_step, "")
 
-    system_prompt = f"""あなたは優しい女性の先生AIキャラクターです。
-小学生の発表会用スライドを一緒に作ります。
+    system_prompt = f"""あなたは小学生に優しく話す先生AIです。
 
-【出力フォーマット（JSON）】
+【絶対ルール】next_step の値は {next_step_value} にすること。変更禁止。
+
+【出力】以下のJSON形式のみ出力（説明文は不要）:
 {{
-  "slide_title": "...",
-  "slide_text": "...",
+  "slide_title": "タイトル",
+  "slide_text": "本文",
   "image_keyword": "英単語1語",
-  "ai_response_voice": "次の質問または完成メッセージ",
-  "next_step": <2|3|4>,
-  "script": "<step3のみ台本 100〜400文字、それ以外は空文字>"
+  "ai_response_voice": "子どもへの優しい返事（150文字以内）。次に何を話せばよいか具体的に案内する。",
+  "next_step": {next_step_value},
+  "script": "{'' if current_step != 3 else '台本をここに書く'}"
 }}
 
 {kanji_instruction}
 
-【現在のステップ】step {current_step}
 {step_instruction}
 {script_suffix}"""
 
@@ -168,5 +187,9 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         error_detail = str(exc)
         return _make_response(500, {"error": error_detail})
 
-    # 10. 成功レスポンス（CORS ヘッダー付き）
+    # 10. next_step をサーバー側で強制上書き（モデルが間違えた場合の安全策）
+    expected_next_step = current_step + 1 if current_step < 3 else 4
+    slide_response["next_step"] = expected_next_step
+
+    # 11. 成功レスポンス（CORS ヘッダー付き）
     return _make_response(200, slide_response)

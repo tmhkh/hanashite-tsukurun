@@ -94,7 +94,7 @@ export class HanashiteTsukurunStack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda')),
       timeout: cdk.Duration.seconds(30),
       environment: {
-        BEDROCK_MODEL_ID: 'anthropic.claude-haiku-4-5-20251001-v1:0',
+        BEDROCK_MODEL_ID: 'jp.anthropic.claude-haiku-4-5-20251001-v1:0',
         BEDROCK_MONTHLY_LIMIT: '500',
         RATE_LIMIT_PARAM_PREFIX: `/${stackName}/bedrock-invoke-count`,
       },
