@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Literal
-from typing_extensions import TypedDict
+from typing import List, Literal, TypedDict
 
 
 class HistoryEntry(TypedDict):
