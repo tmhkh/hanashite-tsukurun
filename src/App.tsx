@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { Grade, SlideData, HistoryEntry } from './types/index';
+import type { Grade, SlideData, HistoryEntry, PresentationGuideEntry } from './types/index';
 import GradeSelector from './components/GradeSelector/GradeSelector';
 import { MainScreen } from './components/MainScreen/MainScreen';
 import { FinishScreen } from './components/FinishScreen/FinishScreen';
@@ -61,11 +61,14 @@ function AppContent() {
    */
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
-  /** 完成したスライドデータ（FinishScreen に渡す） */
-  const [finishedSlides, setFinishedSlides] = useState<SlideData[]>([]);
+  /** 完成したスライドデータ（将来拡張用に保持） */
+  const [, setFinishedSlides] = useState<SlideData[]>([]);
 
-  /** 完成した台本（FinishScreen に渡す） */
-  const [finishedScript, setFinishedScript] = useState<string>('');
+  /** 完成した Marp Markdown（FinishScreen に渡す） */
+  const [finishedMarpMarkdown, setFinishedMarpMarkdown] = useState<string>('');
+
+  /** 完成した Presentation Guide（FinishScreen に渡す） */
+  const [finishedPresentationGuide, setFinishedPresentationGuide] = useState<PresentationGuideEntry[]>([]);
 
   /**
    * Slide_API レスポンス受信後に履歴へ追記する。
@@ -115,9 +118,10 @@ function AppContent() {
    * Step 3 完了時のハンドラー → 完成画面へ遷移
    * Requirements: 7.4
    */
-  const handleComplete = useCallback((slides: SlideData[], script: string) => {
+  const handleComplete = useCallback((slides: SlideData[], marpMarkdown: string, presentationGuide: PresentationGuideEntry[]) => {
     setFinishedSlides(slides);
-    setFinishedScript(script);
+    setFinishedMarpMarkdown(marpMarkdown);
+    setFinishedPresentationGuide(presentationGuide);
     setScreen('finish');
   }, []);
 
@@ -177,8 +181,8 @@ function AppContent() {
 
       {screen === 'finish' && (
         <FinishScreen
-          slides={finishedSlides}
-          script={finishedScript}
+          marpMarkdown={finishedMarpMarkdown}
+          presentationGuide={finishedPresentationGuide}
           onRestart={showGradeSelector}
         />
       )}
