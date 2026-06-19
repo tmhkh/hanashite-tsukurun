@@ -28,6 +28,13 @@ export interface SlideApiRequest {
   history: HistoryEntry[];
 }
 
+// Presentation Guide エントリ
+export interface PresentationGuideEntry {
+  page: 1 | 2 | 3;
+  script: string;         // そのページで話す台本
+  advice: string;         // プレゼンの構造・伝え方アドバイス
+}
+
 // Slide_API レスポンス
 export interface SlideApiResponse {
   slide_title: string;
@@ -35,7 +42,8 @@ export interface SlideApiResponse {
   image_keyword: string;  // 英単語
   ai_response_voice: string;
   next_step: 2 | 3 | 4;  // 4 = 完成
-  script: string;         // step 3 のみ非空
+  marp_markdown: string;  // step 3 のみ Marp 形式 Markdown（3ページ）、それ以外は空文字
+  presentation_guide: PresentationGuideEntry[];  // step 3 のみ3要素、それ以外は空配列
 }
 
 // 会話履歴エントリ
@@ -52,5 +60,6 @@ export interface AppState {
   completedSteps: Step[];
   slides: (SlideData | null)[];  // インデックス 0=step1, 1=step2, 2=step3
   history: HistoryEntry[];       // 最大20件
-  script: string;
+  marpMarkdown: string;          // step 3 完了時に設定
+  presentationGuide: PresentationGuideEntry[];  // step 3 完了時に設定
 }
