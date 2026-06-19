@@ -8,8 +8,8 @@ POST /api/create-slide を処理し、Amazon Bedrock（Claude）を呼び出し�
   2. event["body"] を JSON パースしてリクエストボディを取得
   3. validator.py の validate_request() で検証 → 失敗時 HTTP 400
   4. kanji_filter.py の get_kanji_instruction() でプロンプト指示を取得
-  5. script_generator.py の build_script_prompt_suffix() でスクリプト指示を取得
-  6. system プロンプトを組み立てる
+  5. slide_exporter.py の build_slide_export_prompt_suffix() でエクスポート指示を取得
+  6. system プロンプトを組み立てる（ステップ別動的質問指示含む）
   7. bedrock_client.py の invoke_claude() で Claude を呼び出す
   8. Bedrock エラー時は HTTP 500
   9. 全レスポンスに CORS ヘッダーを付与
@@ -24,7 +24,7 @@ from typing import Any
 from bedrock_client import invoke_claude
 from kanji_filter import get_kanji_instruction
 from rate_limiter import check_and_increment
-from script_generator import build_script_prompt_suffix
+from slide_exporter import build_slide_export_prompt_suffix
 from validator import validate_request
 
 # デフォルトモデル ID（環境変数から読み取り、未設定時は Claude 3 Haiku をデフォルトとする）
@@ -56,9 +56,9 @@ def _build_system_prompt(
 
     設計書の「Bedrock プロンプト構造」に従い、以下のセクションを含む:
     - 出力フォーマット（JSON）
-    - 漢字制限（Kanji_Filter）
-    - 現在のステップ指示
-    - スクリプト生成指示（Script_Generator）
+    - 漢字制限（Kanji_Filter — 全フィールド適用）
+    - 現在のステップ指示（テーマに応じた動的質問生成）
+    - スライドエクスポート指示（Slide_Exporter）
 
     Args:
         grade: 学年区分（"grade0"〜"grade7"）。
@@ -68,36 +68,41 @@ def _build_system_prompt(
         システムプロンプト文字列。
     """
     kanji_instruction = get_kanji_instruction(grade)
-    script_suffix = build_script_prompt_suffix(current_step)
+    export_suffix = build_slide_export_prompt_suffix(current_step)
 
     # 次のステップ値を決定（サーバー側で確定）
     next_step_value = current_step + 1 if current_step < 3 else 4
 
-    # ステップ別の指示
+    # ステップ別の質問指示（つかみ→展開→結論の動的質問生成）
     step_instructions = {
         1: (
-            "子どもが発表テーマを話しました。"
-            "slide_titleにテーマを入れてください。"
-            "ai_response_voiceで、子どもの発言を受け止めつつ、次のステップ（内容の詳細）で何を話せばよいかを"
-            "優しく丁寧に案内してください。例：「いいテーマだね！つぎは、そのテーマについて、どんなことをしたか・見たか・感じたかを教えてね」"
+            "【Step 1: つかみ・導入】\n"
+            "子どもが発表テーマを話しました。\n"
+            "slide_titleにテーマを入れてください。\n"
+            "ai_response_voiceでは、子どもの発言を受け止めた後、テーマの輪郭を具体化する質問を行ってください。\n"
+            "例：「いいテーマだね！それってどんなもの？みんなに知ってほしいポイントは何かな？」\n"
+            "テーマに応じて「それはどんな色？」「どこで見つけたの？」「いつからすきなの？」など具体的に掘り下げてください。"
         ),
         2: (
-            "子どもがテーマの詳細を話しました。"
-            "slide_textに内容をまとめてください。"
-            "ai_response_voiceで、子どもの発言をほめつつ、これからまとめに入ることを伝えてください。"
-            "例：「すごいね！それはとっても大切なことだね。これまでのことをまとめてはっぴょう台本を作るよ！」"
+            "【Step 2: いちばんつたえたいこと・展開】\n"
+            "子どもがテーマの詳細を話しました。\n"
+            "slide_textに内容をまとめてください。\n"
+            "ai_response_voiceでは、Step 1で得たテーマに基づき、具体的なエピソードや詳細を引き出す質問を行ってください。\n"
+            "例：「すごいね！いちばんすきなところはどこ？おもしろかったこと、びっくりしたことはある？」\n"
+            "子どもの回答を受け止めつつ、まとめに入ることを伝えてください。"
         ),
         3: (
-            "最終ステップです。これまでの会話をまとめて発表台本を作ります。"
-            "slide_titleに「まとめ」と入れてください。"
-            "scriptフィールドに100文字以上400文字以内の発表台本を書いてください。"
-            "ai_response_voiceに完成メッセージを入れてください。"
+            "【Step 3: まとめ・結論】\n"
+            "最終ステップです。これまでの会話を踏まえてまとめます。\n"
+            "slide_titleに「まとめ」と入れてください。\n"
+            "ai_response_voiceに完成メッセージを入れてください。\n"
             "例：「すばらしいはっぴょうができたよ！みんなにじょうずに伝えてね！」"
         ),
     }
     step_instruction = step_instructions.get(current_step, "")
 
     system_prompt = f"""あなたは小学生に優しく話す先生AIです。
+子どもとの音声会話でプレゼンスライドを一緒に作ります。
 
 【絶対ルール】next_step の値は {next_step_value} にすること。変更禁止。
 
@@ -106,15 +111,17 @@ def _build_system_prompt(
   "slide_title": "タイトル",
   "slide_text": "本文",
   "image_keyword": "英単語1語",
-  "ai_response_voice": "子どもへの優しい返事（150文字以内）。次に何を話せばよいか具体的に案内する。",
+  "ai_response_voice": "子どもへの優しい返事（150文字以内）。テーマに応じた具体的な質問を含める。",
   "next_step": {next_step_value},
-  "script": "{'' if current_step != 3 else '台本をここに書く'}"
+  "marp_markdown": "<step3のみMarp形式Markdown 3ページ、それ以外は空文字>",
+  "presentation_guide": [<step3のみ3要素の配列、それ以外は空配列>]
 }}
 
 {kanji_instruction}
 
 {step_instruction}
-{script_suffix}"""
+
+{export_suffix}"""
 
     return system_prompt
 
@@ -155,7 +162,6 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     history: list[dict[str, Any]] = body["history"]
 
     # 4 & 5 & 6. システムプロンプトを組み立て
-    # （get_kanji_instruction と build_script_prompt_suffix を内部で呼び出す）
     system_prompt = _build_system_prompt(grade, current_step)
 
     # messages: history + 今回のユーザー発話
@@ -191,5 +197,10 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     expected_next_step = current_step + 1 if current_step < 3 else 4
     slide_response["next_step"] = expected_next_step
 
-    # 11. 成功レスポンス（CORS ヘッダー付き）
+    # 11. step != 3 のとき marp_markdown / presentation_guide を強制空値に
+    if current_step != 3:
+        slide_response["marp_markdown"] = ""
+        slide_response["presentation_guide"] = []
+
+    # 12. 成功レスポンス（CORS ヘッダー付き）
     return _make_response(200, slide_response)

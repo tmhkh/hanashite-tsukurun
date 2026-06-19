@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import type { Grade, Step, SlideData, HistoryEntry } from '../../types/index';
+import type { Grade, Step, SlideData, HistoryEntry, PresentationGuideEntry } from '../../types/index';
 import { useSlideApi } from '../../hooks/useSlideApi';
 import { useSpeechRecognizer } from '../../hooks/useSpeechRecognizer';
 import { useSpeechSynthesis } from '../../hooks/useSpeechSynthesis';
@@ -14,7 +14,7 @@ import { AICharacter } from './AICharacter';
 export interface MainScreenProps {
   grade: Grade;
   history: HistoryEntry[];
-  onComplete: (slides: SlideData[], script: string) => void;
+  onComplete: (slides: SlideData[], marpMarkdown: string, presentationGuide: PresentationGuideEntry[]) => void;
   onChangeGrade: () => void;
   onHistoryUpdate: (userSpeech: string, aiVoice: string) => void;
 }
@@ -132,7 +132,7 @@ export function MainScreen({
           // AI発話を再生してから完了遷移
           setAiText(response.ai_response_voice);
           speak(response.ai_response_voice, () => {
-            onComplete(finalSlides, response.script);
+            onComplete(finalSlides, response.marp_markdown, response.presentation_guide);
           });
           return;
         }
