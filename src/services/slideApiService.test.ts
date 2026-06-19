@@ -2,12 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { MOCK_RESPONSES } from '../mocks/mockResponses'
 import type { SlideApiRequest } from '../types/index'
 
-// テスト用のリクエストデータ
 function makeRequest(step: 1 | 2 | 3): SlideApiRequest {
   return {
     grade: 'grade1',
     current_step: step,
-    user_speech: 'テスト発話',
+    user_speech: 'test',
     history: [],
   }
 }
@@ -23,7 +22,6 @@ describe('slideApiService', () => {
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
-    // Reset env
     Object.keys(import.meta.env).forEach((key) => {
       if (!(key in originalEnv)) {
         delete (import.meta.env as Record<string, unknown>)[key]
@@ -34,12 +32,12 @@ describe('slideApiService', () => {
     })
   })
 
-  describe('モックモード (VITE_MOCK_MODE=true)', () => {
+  describe('mock mode (VITE_MOCK_MODE=true)', () => {
     beforeEach(() => {
       ;(import.meta.env as Record<string, unknown>).VITE_MOCK_MODE = 'true'
     })
 
-    it('Step 1 でモックレスポンスを返す', async () => {
+    it('Step 1 returns mock response', async () => {
       const { callSlideApi } = await import('./slideApiService')
 
       const promise = callSlideApi(makeRequest(1))
@@ -47,12 +45,12 @@ describe('slideApiService', () => {
       const result = await promise
 
       expect(result).toEqual(MOCK_RESPONSES[1])
-      expect(result.slide_title).toBe('すきなどうぶつ')
+      expect(result.slide_title).toBe(MOCK_RESPONSES[1].slide_title)
       expect(result.next_step).toBe(2)
-      expect(result.script).toBe('')
+      expect(result.marp_markdown).toBe('')
     })
 
-    it('Step 2 でモックレスポンスを返す', async () => {
+    it('Step 2 returns mock response', async () => {
       const { callSlideApi } = await import('./slideApiService')
 
       const promise = callSlideApi(makeRequest(2))
@@ -60,12 +58,12 @@ describe('slideApiService', () => {
       const result = await promise
 
       expect(result).toEqual(MOCK_RESPONSES[2])
-      expect(result.slide_title).toBe('どんなところがすき？')
+      expect(result.slide_title).toBe(MOCK_RESPONSES[2].slide_title)
       expect(result.next_step).toBe(3)
-      expect(result.script).toBe('')
+      expect(result.marp_markdown).toBe('')
     })
 
-    it('Step 3 でモックレスポンスを返す（script が非空）', async () => {
+    it('Step 3 returns mock response with non-empty marp_markdown', async () => {
       const { callSlideApi } = await import('./slideApiService')
 
       const promise = callSlideApi(makeRequest(3))
@@ -73,12 +71,13 @@ describe('slideApiService', () => {
       const result = await promise
 
       expect(result).toEqual(MOCK_RESPONSES[3])
-      expect(result.slide_title).toBe('まとめ')
+      expect(result.slide_title).toBe(MOCK_RESPONSES[3].slide_title)
       expect(result.next_step).toBe(4)
-      expect(result.script.length).toBeGreaterThan(0)
+      expect(result.marp_markdown.length).toBeGreaterThan(0)
+      expect(result.presentation_guide.length).toBe(3)
     })
 
-    it('モックモードでは fetch を呼び出さない', async () => {
+    it('does not call fetch in mock mode', async () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch')
       const { callSlideApi } = await import('./slideApiService')
 
@@ -89,7 +88,7 @@ describe('slideApiService', () => {
       expect(fetchSpy).not.toHaveBeenCalled()
     })
 
-    it('モックモードでは約500msの遅延がある', async () => {
+    it('has ~500ms delay in mock mode', async () => {
       const { callSlideApi } = await import('./slideApiService')
 
       let resolved = false
@@ -97,30 +96,29 @@ describe('slideApiService', () => {
         resolved = true
       })
 
-      // 400ms時点ではまだ解決していない
       await vi.advanceTimersByTimeAsync(400)
       expect(resolved).toBe(false)
 
-      // 500ms経過後に解決する
       await vi.advanceTimersByTimeAsync(100)
       await promise
       expect(resolved).toBe(true)
     })
   })
 
-  describe('本番モード (VITE_MOCK_MODE 未設定または "true" 以外)', () => {
-    it('VITE_MOCK_MODE 未設定のとき fetch を呼び出す', async () => {
+  describe('production mode (VITE_MOCK_MODE unset or not "true")', () => {
+    it('calls fetch when VITE_MOCK_MODE is unset', async () => {
       delete (import.meta.env as Record<string, unknown>).VITE_MOCK_MODE
       const mockResponse = {
         ok: true,
         json: () =>
           Promise.resolve({
-            slide_title: 'テスト',
-            slide_text: 'テスト内容',
+            slide_title: 'test',
+            slide_text: 'content',
             image_keyword: 'star',
-            ai_response_voice: 'テスト音声',
+            ai_response_voice: 'voice',
             next_step: 2,
-            script: '',
+            marp_markdown: '',
+            presentation_guide: [],
           }),
       }
       const fetchSpy = vi
@@ -139,18 +137,19 @@ describe('slideApiService', () => {
       )
     })
 
-    it('VITE_MOCK_MODE="false" のとき fetch を呼び出す', async () => {
+    it('calls fetch when VITE_MOCK_MODE="false"', async () => {
       ;(import.meta.env as Record<string, unknown>).VITE_MOCK_MODE = 'false'
       const mockResponse = {
         ok: true,
         json: () =>
           Promise.resolve({
-            slide_title: 'テスト',
-            slide_text: 'テスト内容',
+            slide_title: 'test',
+            slide_text: 'content',
             image_keyword: 'star',
-            ai_response_voice: 'テスト音声',
+            ai_response_voice: 'voice',
             next_step: 2,
-            script: '',
+            marp_markdown: '',
+            presentation_guide: [],
           }),
       }
       const fetchSpy = vi
@@ -163,18 +162,19 @@ describe('slideApiService', () => {
       expect(fetchSpy).toHaveBeenCalled()
     })
 
-    it('VITE_MOCK_MODE="" (空文字) のとき fetch を呼び出す', async () => {
+    it('calls fetch when VITE_MOCK_MODE=""', async () => {
       ;(import.meta.env as Record<string, unknown>).VITE_MOCK_MODE = ''
       const mockResponse = {
         ok: true,
         json: () =>
           Promise.resolve({
-            slide_title: 'テスト',
-            slide_text: 'テスト内容',
+            slide_title: 'test',
+            slide_text: 'content',
             image_keyword: 'star',
-            ai_response_voice: 'テスト音声',
+            ai_response_voice: 'voice',
             next_step: 2,
-            script: '',
+            marp_markdown: '',
+            presentation_guide: [],
           }),
       }
       const fetchSpy = vi
@@ -187,7 +187,7 @@ describe('slideApiService', () => {
       expect(fetchSpy).toHaveBeenCalled()
     })
 
-    it('HTTP エラー時に例外を throw する', async () => {
+    it('throws on HTTP error', async () => {
       delete (import.meta.env as Record<string, unknown>).VITE_MOCK_MODE
       const mockResponse = {
         ok: false,

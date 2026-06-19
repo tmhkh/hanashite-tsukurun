@@ -1,172 +1,141 @@
-import type { SlideData } from '../../types';
-import { SlideIcon } from '../SlidePreview/SlideIcon';
+import { useState, useCallback } from 'react';
+import type { PresentationGuideEntry } from '../../types';
+import { MarpSlideViewer } from './MarpSlideViewer';
+import { PresentationGuide } from './PresentationGuide';
 
 export interface FinishScreenProps {
-  slides: SlideData[];
-  script: string;
+  marpMarkdown: string;
+  presentationGuide: PresentationGuideEntry[];
   onRestart: () => void;
 }
 
 /**
  * 完成画面コンポーネント。
- * - 3枚のスライドを左から Step 1・2・3 の順に横並びで表示する
- * - script の内容をスライド下部に表示する（台本エリア）
- * - 「もう一度つくる」ボタンを表示し、クリック時に onRestart() を呼び出す
+ * - Marp スライドをレンダリングし、1ページずつ表示
+ * - スライド下に Presentation_Guide（台本＋アドバイス）をページ連動で表示
+ * - 「コピー」ボタンで marp_markdown をクリップボードにコピー
+ * - 「もう一度つくる」ボタンで Grade_Selector に戻る
+ *
+ * Requirements: 7.3, 7.4, 7.5, 7.7, 7.8, 7.9
  */
-export function FinishScreen({ slides, script, onRestart }: FinishScreenProps) {
+export function FinishScreen({ marpMarkdown, presentationGuide, onRestart }: FinishScreenProps) {
+  const [currentPage, setCurrentPage] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(marpMarkdown);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // フォールバック: execCommand
+      const textarea = document.createElement('textarea');
+      textarea.value = marpMarkdown;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [marpMarkdown]);
+
+  // 現在のページに対応するガイド
+  const currentGuide = presentationGuide[currentPage] || null;
+
   return (
-    <div
-      className="finish-screen"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '24px',
-        padding: '24px',
-        width: '100%',
-        maxWidth: '900px',
-        margin: '0 auto',
-      }}
-    >
-      {/* スライド横並びエリア */}
-      <div
-        className="finish-slides"
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          gap: '16px',
-          justifyContent: 'center',
-          flexWrap: 'wrap',
-          width: '100%',
-        }}
+    <div style={containerStyle}>
+      {/* 完成メッセージ */}
+      <h2 style={titleStyle}>🎉 スライドが できたよ！</h2>
+
+      {/* Marp スライドビューアー */}
+      <MarpSlideViewer
+        markdown={marpMarkdown}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
+      />
+
+      {/* Presentation Guide セクション（ページ連動） */}
+      {currentGuide && (
+        <div style={guideContainerStyle}>
+          <PresentationGuide guide={currentGuide} />
+        </div>
+      )}
+
+      {/* コピーボタン */}
+      <button
+        type="button"
+        onClick={handleCopy}
+        style={copyButtonStyle}
+        aria-label="スライドのMarkdownをコピー"
       >
-        {slides.map((slide, index) => (
-          <div
-            key={slide.step}
-            className="finish-slide-card"
-            aria-label={`スライド ${slide.step}`}
-            style={{
-              border: '2px solid #e0e0e0',
-              borderRadius: '12px',
-              padding: '16px',
-              minWidth: '180px',
-              minHeight: '200px',
-              flex: '1 1 0',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '8px',
-              backgroundColor: '#fff',
-            }}
-          >
-            {/* ステップ番号 */}
-            <span
-              className="finish-slide-step"
-              style={{
-                fontSize: '14px',
-                color: '#6366f1',
-                fontWeight: 'bold',
-              }}
-            >
-              Step {index + 1}
-            </span>
-
-            {/* アイコン */}
-            <div
-              className="finish-slide-icon"
-              style={{
-                width: '64px',
-                height: '64px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <SlideIcon keyword={slide.image_keyword} size={48} />
-            </div>
-
-            {/* タイトル */}
-            <h3
-              className="finish-slide-title"
-              style={{
-                fontSize: '18px',
-                fontWeight: 'bold',
-                margin: 0,
-                textAlign: 'center',
-              }}
-            >
-              {slide.slide_title}
-            </h3>
-
-            {/* テキスト */}
-            <p
-              className="finish-slide-text"
-              style={{
-                fontSize: '16px',
-                margin: 0,
-                textAlign: 'center',
-              }}
-            >
-              {slide.slide_text}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* 台本エリア */}
-      <div
-        className="finish-script"
-        aria-label="発表台本"
-        style={{
-          width: '100%',
-          backgroundColor: '#f9fafb',
-          border: '1px solid #e5e7eb',
-          borderRadius: '12px',
-          padding: '20px',
-        }}
-      >
-        <h3
-          style={{
-            fontSize: '16px',
-            fontWeight: 'bold',
-            margin: '0 0 12px 0',
-          }}
-        >
-          📝 はっぴょう だいほん
-        </h3>
-        <p
-          className="finish-script-text"
-          style={{
-            fontSize: '16px',
-            lineHeight: '1.8',
-            margin: 0,
-            whiteSpace: 'pre-wrap',
-          }}
-        >
-          {script}
-        </p>
-      </div>
+        {copied ? '✓ コピーしたよ！' : '📋 スライドを コピー'}
+      </button>
 
       {/* もう一度つくるボタン */}
       <button
         className="finish-restart-button"
+        type="button"
         onClick={onRestart}
         aria-label="もう一度つくる"
-        style={{
-          fontSize: '18px',
-          fontWeight: 'bold',
-          padding: '16px 32px',
-          borderRadius: '12px',
-          border: 'none',
-          backgroundColor: '#6366f1',
-          color: '#fff',
-          cursor: 'pointer',
-          minWidth: '200px',
-          minHeight: '56px',
-        }}
+        style={restartButtonStyle}
       >
         もう一度つくる
       </button>
     </div>
   );
 }
+
+// --- Styles ---
+
+const containerStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '24px',
+  padding: '24px',
+  width: '100%',
+  maxWidth: '800px',
+  margin: '0 auto',
+};
+
+const titleStyle: React.CSSProperties = {
+  fontSize: '24px',
+  fontWeight: 'bold',
+  margin: 0,
+  textAlign: 'center',
+};
+
+const guideContainerStyle: React.CSSProperties = {
+  width: '100%',
+  maxWidth: '720px',
+};
+
+const copyButtonStyle: React.CSSProperties = {
+  fontSize: '16px',
+  fontWeight: 'bold',
+  padding: '12px 24px',
+  borderRadius: '8px',
+  border: '2px solid #10b981',
+  backgroundColor: '#ffffff',
+  color: '#10b981',
+  cursor: 'pointer',
+  minWidth: '200px',
+};
+
+const restartButtonStyle: React.CSSProperties = {
+  fontSize: '18px',
+  fontWeight: 'bold',
+  padding: '16px 32px',
+  borderRadius: '12px',
+  border: 'none',
+  backgroundColor: '#6366f1',
+  color: '#fff',
+  cursor: 'pointer',
+  minWidth: '200px',
+  minHeight: '56px',
+};

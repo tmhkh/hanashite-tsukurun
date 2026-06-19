@@ -36,7 +36,8 @@ const mockResponse: SlideApiResponse = {
   image_keyword: 'dog',
   ai_response_voice: 'いいね！どんなところがすきなの？',
   next_step: 2,
-  script: '',
+  marp_markdown: '',
+  presentation_guide: [],
 }
 
 describe('useSlideApi', () => {

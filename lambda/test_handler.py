@@ -32,7 +32,8 @@ MOCK_SLIDE_RESPONSE = {
     "image_keyword": "dog",
     "ai_response_voice": "どんなところがすきなの？",
     "next_step": 2,
-    "script": "",
+    "marp_markdown": "",
+    "presentation_guide": [],
 }
 
 
@@ -160,7 +161,7 @@ class TestSuccessfulRequest:
         assert "image_keyword" in body
         assert "ai_response_voice" in body
         assert "next_step" in body
-        assert "script" in body
+        assert "script" in body or "marp_markdown" in body
 
     @patch("handler.invoke_claude", return_value=MOCK_SLIDE_RESPONSE)
     def test_bedrock_called_with_correct_model_id(self, mock_invoke):
@@ -261,22 +262,22 @@ class TestSystemPromptStructure:
 
     @patch("handler.invoke_claude", return_value=MOCK_SLIDE_RESPONSE)
     def test_prompt_step3_contains_script_instruction(self, mock_invoke):
-        """step=3 のプロンプトに台本生成指示が含まれる。"""
+        """step=3 のプロンプトに Marp/presentation_guide 生成指示が含まれる。"""
         body = {**VALID_BODY, "current_step": 3}
         event = _make_event(body)
         lambda_handler(event, None)
         call_kwargs = mock_invoke.call_args
         prompt = call_kwargs.kwargs.get("prompt") or call_kwargs.args[0]
-        assert "script" in prompt or "台本" in prompt
+        assert "marp_markdown" in prompt or "Marp" in prompt
 
     @patch("handler.invoke_claude", return_value=MOCK_SLIDE_RESPONSE)
     def test_prompt_step1_contains_empty_script_instruction(self, mock_invoke):
-        """step=1 のプロンプトに script 空文字指示が含まれる。"""
+        """step=1 のプロンプトに marp_markdown 空文字指示が含まれる。"""
         event = _make_event(VALID_BODY)  # current_step=1
         lambda_handler(event, None)
         call_kwargs = mock_invoke.call_args
         prompt = call_kwargs.kwargs.get("prompt") or call_kwargs.args[0]
-        # script フィールドを空文字にする指示が含まれること
+        # marp_markdown を空文字にする指示が含まれること
         assert '""' in prompt or "空文字" in prompt
 
 

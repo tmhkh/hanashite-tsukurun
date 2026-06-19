@@ -1,7 +1,10 @@
 """Kanji_Filter: 学年別漢字制限プロンプト指示生成モジュール。
 
 grade 区分に応じて Bedrock_Client へ渡すプロンプト指示文字列を返す。
-`slide_text` と `ai_response_voice` の両フィールドに同一の制限を適用する。
+全出力フィールド（slide_text, ai_response_voice, marp_markdown,
+presentation_guide 内の script / advice）に同一の制限を適用する。
+
+Requirements: 5.1〜5.9, 7.6, 7.10
 """
 
 from __future__ import annotations
@@ -25,8 +28,9 @@ VALID_GRADES: frozenset[str] = frozenset(_KANJI_INSTRUCTIONS.keys())
 def get_kanji_instruction(grade: str) -> str:
     """学年区分に対応する漢字制限プロンプト指示文字列を返す。
 
-    返り値の指示文字列は ``slide_text`` と ``ai_response_voice`` の
-    両フィールドに同一の制限を適用するよう明示した内容となっている。
+    返り値の指示文字列は全出力フィールド（slide_text, ai_response_voice,
+    marp_markdown, presentation_guide 内の script / advice）に同一の
+    制限を適用するよう明示した内容となっている。
 
     Args:
         grade: 学年区分文字列。"grade0"〜"grade7" のいずれか。
@@ -45,9 +49,10 @@ def get_kanji_instruction(grade: str) -> str:
 
     base = _KANJI_INSTRUCTIONS[grade]
 
-    # slide_text と ai_response_voice の両フィールドへの適用を明示する
     return (
         f"【漢字制限】\n"
         f"{base}\n"
-        f"この制限は「slide_text」と「ai_response_voice」の両フィールドに同様に適用してください。"
+        f"この制限は「slide_text」「ai_response_voice」「marp_markdown」"
+        f"「presentation_guide 内の script / advice」の"
+        f"すべてのテキスト出力フィールドに同様に適用してください。"
     )
