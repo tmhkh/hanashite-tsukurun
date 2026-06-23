@@ -12,7 +12,6 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@aws-sdk/client-cognito-identity-provider": "^3.1068.0",
     "@marp-team/marp-core": "^4.3.0",
     "fast-check": "^3.23.2",
     "lucide-react": "^0.511.0",
