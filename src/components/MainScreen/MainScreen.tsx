@@ -129,10 +129,22 @@ export function MainScreen({
           const finalSlides: SlideData[] = slides.map((s, i) =>
             i === currentStep - 1 ? newSlide : s!
           ) as SlideData[];
+          // marp_markdown / presentation_guide のフォールバック
+          let marpMd = response.marp_markdown || '';
+          const guide = response.presentation_guide || [];
+
+          // marp_markdown が空の場合、スライドデータから自動生成
+          if (!marpMd) {
+            const pages = finalSlides.map((s) =>
+              `# ${s.slide_title}\n\n${s.slide_text}\n\n<!-- icon: ${s.image_keyword} -->`
+            );
+            marpMd = `---\nmarp: true\ntheme: default\npaginate: true\n---\n\n${pages.join('\n\n---\n\n')}`;
+          }
+
           // AI発話を再生してから完了遷移
           setAiText(response.ai_response_voice);
           speak(response.ai_response_voice, () => {
-            onComplete(finalSlides, response.marp_markdown, response.presentation_guide);
+            onComplete(finalSlides, marpMd, guide);
           });
           return;
         }

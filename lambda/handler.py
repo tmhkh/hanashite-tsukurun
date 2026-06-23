@@ -201,6 +201,12 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     if current_step != 3:
         slide_response["marp_markdown"] = ""
         slide_response["presentation_guide"] = []
+    else:
+        # step == 3 でも Claude がフィールドを省略した場合のフォールバック
+        if "marp_markdown" not in slide_response:
+            slide_response["marp_markdown"] = ""
+        if "presentation_guide" not in slide_response:
+            slide_response["presentation_guide"] = []
 
     # 12. 成功レスポンス（CORS ヘッダー付き）
     return _make_response(200, slide_response)
