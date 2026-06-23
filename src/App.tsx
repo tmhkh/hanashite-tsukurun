@@ -137,7 +137,7 @@ function AppContent() {
   // --- 未認証: LoginScreen を表示し、Grade_Selector 以降へのアクセスを遮断 ---
   // Requirements: 2.1
   if (!isAuthenticated) {
-    return <LoginScreen onLoginSuccess={() => {}} />;
+    return <LoginScreen />;
   }
 
   // --- 認証済み: 既存の画面ルーティング + ログアウトボタン ---

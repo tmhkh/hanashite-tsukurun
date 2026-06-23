@@ -9,12 +9,11 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as path from 'path';
 import { Construct } from 'constructs';
 
 export class HanashiteTsukurunStack extends cdk.Stack {
-  public readonly userPool: cognito.UserPool;
-  public readonly userPoolClient: cognito.UserPoolClient;
   public readonly distribution: cloudfront.Distribution;
   public readonly lambdaFunction: lambda.Function;
   public readonly httpApi: apigwv2.HttpApi;
@@ -24,43 +23,36 @@ export class HanashiteTsukurunStack extends cdk.Stack {
 
     const stackName = this.node.tryGetContext('stackName') || 'hanashite-tsukurun';
 
-    // Cognito User Pool
-    this.userPool = new cognito.UserPool(this, 'UserPool', {
-      userPoolName: `${stackName}-user-pool`,
-      selfSignUpEnabled: false,
-      signInAliases: {
-        username: true,
-      },
-      passwordPolicy: {
-        minLength: 8,
-        requireLowercase: true,
-        requireUppercase: true,
-        requireDigits: true,
-        requireSymbols: true,
-      },
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
+    // ========================================
+    // 共有認証基盤の参照 (AuthPlatformStack の出力値を SSM 経由で取得)
+    // ========================================
+    const userPoolId = ssm.StringParameter.valueForStringParameter(
+      this, '/auth-platform/user-pool-id'
+    );
+    const userPoolClientId = ssm.StringParameter.valueForStringParameter(
+      this, '/auth-platform/hanashite-tsukurun-client-id'
+    );
 
-    // Cognito App Client
-    this.userPoolClient = this.userPool.addClient('AppClient', {
-      userPoolClientName: `${stackName}-app-client`,
-      generateSecret: false,
-      authFlows: {
-        userPassword: true,
-      },
-      idTokenValidity: cdk.Duration.hours(1),
-      refreshTokenValidity: cdk.Duration.days(30),
-    });
+    // 共有 User Pool を参照 (JWT Authorizer 用)
+    const userPool = cognito.UserPool.fromUserPoolId(this, 'SharedUserPool', userPoolId);
+    const userPoolClient = cognito.UserPoolClient.fromUserPoolClientId(
+      this, 'SharedUserPoolClient', userPoolClientId
+    );
 
-    // S3 Bucket - パブリックアクセスを全ブロック
+    // ========================================
+    // S3 Bucket - フロントエンド配信
+    // ========================================
     const websiteBucket = new s3.Bucket(this, 'WebsiteBucket', {
       bucketName: `${stackName}-website`,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
+    cdk.Tags.of(websiteBucket).add('name', `${stackName}-website`);
 
-    // CloudFront Distribution with Origin Access Control (OAC)
+    // ========================================
+    // CloudFront Distribution
+    // ========================================
     this.distribution = new cloudfront.Distribution(this, 'Distribution', {
       comment: `${stackName} - Frontend Distribution`,
       defaultBehavior: {
@@ -77,8 +69,9 @@ export class HanashiteTsukurunStack extends cdk.Stack {
         },
       ],
     });
+    cdk.Tags.of(this.distribution).add('name', `${stackName}-cdn`);
 
-    // BucketDeployment - dist/ を S3 にアップロード
+    // BucketDeployment
     new s3deploy.BucketDeployment(this, 'DeployWebsite', {
       sources: [s3deploy.Source.asset(path.join(__dirname, '../../dist'))],
       destinationBucket: websiteBucket,
@@ -86,7 +79,9 @@ export class HanashiteTsukurunStack extends cdk.Stack {
       distributionPaths: ['/*'],
     });
 
-    // Lambda Function - Python 3.13, 30s timeout
+    // ========================================
+    // Lambda Function
+    // ========================================
     this.lambdaFunction = new lambda.Function(this, 'SlideApiHandler', {
       functionName: `${stackName}-slide-api-handler`,
       runtime: lambda.Runtime.PYTHON_3_13,
@@ -99,6 +94,7 @@ export class HanashiteTsukurunStack extends cdk.Stack {
         RATE_LIMIT_PARAM_PREFIX: `/${stackName}/bedrock-invoke-count`,
       },
     });
+    cdk.Tags.of(this.lambdaFunction).add('name', `${stackName}-slide-api-handler`);
 
     // Grant Bedrock InvokeModel permission
     this.lambdaFunction.addToRolePolicy(new iam.PolicyStatement({
@@ -112,7 +108,9 @@ export class HanashiteTsukurunStack extends cdk.Stack {
       resources: [`arn:aws:ssm:${this.region}:${this.account}:parameter/${stackName}/bedrock-invoke-count-*`],
     }));
 
-    // HTTP API (API Gateway v2) with CORS
+    // ========================================
+    // HTTP API (API Gateway v2)
+    // ========================================
     const lambdaIntegration = new HttpLambdaIntegration('SlideApiIntegration', this.lambdaFunction);
 
     this.httpApi = new apigwv2.HttpApi(this, 'HttpApi', {
@@ -123,13 +121,14 @@ export class HanashiteTsukurunStack extends cdk.Stack {
         allowHeaders: ['Content-Type', 'Authorization'],
       },
     });
+    cdk.Tags.of(this.httpApi).add('name', `${stackName}-api`);
 
-    // Cognito JWT Authorizer
-    const authorizer = new HttpUserPoolAuthorizer(`${stackName}-cognito-authorizer`, this.userPool, {
-      userPoolClients: [this.userPoolClient],
+    // Cognito JWT Authorizer (共有 User Pool を参照)
+    const authorizer = new HttpUserPoolAuthorizer(`${stackName}-cognito-authorizer`, userPool, {
+      userPoolClients: [userPoolClient],
     });
 
-    // POST /api/create-slide route with Lambda integration and JWT Authorizer
+    // POST /api/create-slide
     this.httpApi.addRoutes({
       path: '/api/create-slide',
       methods: [apigwv2.HttpMethod.POST],
@@ -137,17 +136,9 @@ export class HanashiteTsukurunStack extends cdk.Stack {
       authorizer,
     });
 
-    // CfnOutput — デプロイ後に .env.production に設定するための参照値
-    new cdk.CfnOutput(this, 'UserPoolId', {
-      value: this.userPool.userPoolId,
-      description: 'Cognito User Pool ID (VITE_COGNITO_USER_POOL_ID)',
-    });
-
-    new cdk.CfnOutput(this, 'UserPoolClientId', {
-      value: this.userPoolClient.userPoolClientId,
-      description: 'Cognito App Client ID (VITE_COGNITO_CLIENT_ID)',
-    });
-
+    // ========================================
+    // Outputs
+    // ========================================
     new cdk.CfnOutput(this, 'ApiEndpoint', {
       value: this.httpApi.apiEndpoint,
       description: 'API Gateway endpoint (VITE_API_ENDPOINT)',
@@ -158,7 +149,7 @@ export class HanashiteTsukurunStack extends cdk.Stack {
       description: 'CloudFront distribution URL',
     });
 
-    // API Gateway スロットリング — バースト10、レート5リクエスト/秒
+    // API Gateway スロットリング
     const defaultStage = this.httpApi.defaultStage?.node.defaultChild as apigwv2.CfnStage;
     if (defaultStage) {
       defaultStage.defaultRouteSettings = {
