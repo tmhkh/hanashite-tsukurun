@@ -27,3 +27,4 @@ __pycache__/
 
 # Logs
 *.log
+lambda_deploy.zip
