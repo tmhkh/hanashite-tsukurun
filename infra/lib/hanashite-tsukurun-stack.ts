@@ -67,6 +67,12 @@ export class HanashiteTsukurunStack extends cdk.Stack {
           responsePagePath: '/index.html',
           ttl: cdk.Duration.minutes(0),
         },
+        {
+          httpStatus: 403,
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html',
+          ttl: cdk.Duration.minutes(0),
+        },
       ],
     });
     cdk.Tags.of(this.distribution).add('name', `${stackName}-cdn`);
