@@ -286,9 +286,11 @@ const containerStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  gap: '16px',
-  padding: '16px',
+  gap: '20px',
+  padding: '24px 16px',
   minHeight: '100vh',
+  maxWidth: '900px',
+  margin: '0 auto',
 };
 
 const micAreaStyle: React.CSSProperties = {
@@ -306,9 +308,15 @@ const footerStyle: React.CSSProperties = {
 const changeGradeButtonStyle: React.CSSProperties = {
   padding: '12px 24px',
   fontSize: '16px',
-  borderRadius: '8px',
-  border: '2px solid #2196f3',
-  backgroundColor: '#ffffff',
-  color: '#2196f3',
+  fontWeight: 600,
+  borderRadius: '16px',
+  border: '1px solid rgba(255, 255, 255, 0.4)',
+  background: 'rgba(255, 255, 255, 0.2)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  color: '#ffffff',
   cursor: 'pointer',
+  boxShadow: '0 4px 16px rgba(31, 38, 135, 0.1)',
+  transition: 'all 0.3s ease',
+  textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
 };

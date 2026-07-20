@@ -5,7 +5,7 @@ export interface PresentationGuideProps {
 }
 
 /**
- * Presentation Guide コンポーネント。
+ * Presentation Guide コンポーネント（グラスモルフィズム）。
  * 現在のスライドページに対応する台本とプレゼンアドバイスを表示する。
  *
  * - 「このページで はなすこと」ラベル下に script を表示
@@ -19,7 +19,7 @@ export function PresentationGuide({ guide }: PresentationGuideProps) {
       {/* 台本セクション */}
       <div style={sectionStyle}>
         <h4 style={labelStyle}>
-          🎤 このページで はなすこと
+          このページで はなすこと
         </h4>
         <p style={scriptTextStyle}>
           {guide.script}
@@ -29,7 +29,7 @@ export function PresentationGuide({ guide }: PresentationGuideProps) {
       {/* アドバイスセクション */}
       <div style={adviceSectionStyle}>
         <h4 style={adviceLabelStyle}>
-          💡 プレゼンの コツ
+          プレゼンの コツ
         </h4>
         <p style={adviceTextStyle}>
           {guide.advice}
@@ -49,17 +49,21 @@ const containerStyle: React.CSSProperties = {
 };
 
 const sectionStyle: React.CSSProperties = {
-  backgroundColor: '#f9fafb',
-  border: '1px solid #e5e7eb',
-  borderRadius: '12px',
-  padding: '16px 20px',
+  background: 'rgba(255, 255, 255, 0.15)',
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+  border: '1px solid rgba(255, 255, 255, 0.3)',
+  borderRadius: '16px',
+  padding: '20px 24px',
+  boxShadow: '0 4px 16px rgba(31, 38, 135, 0.08)',
 };
 
 const labelStyle: React.CSSProperties = {
   fontSize: '16px',
-  fontWeight: 'bold',
+  fontWeight: 700,
   margin: '0 0 8px 0',
-  color: '#1f2937',
+  color: '#ffffff',
+  textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
 };
 
 const scriptTextStyle: React.CSSProperties = {
@@ -67,21 +71,25 @@ const scriptTextStyle: React.CSSProperties = {
   lineHeight: '1.8',
   margin: 0,
   whiteSpace: 'pre-wrap',
-  color: '#374151',
+  color: 'rgba(255, 255, 255, 0.9)',
 };
 
 const adviceSectionStyle: React.CSSProperties = {
-  backgroundColor: '#fffbeb',
-  border: '1px solid #fde68a',
-  borderRadius: '12px',
-  padding: '16px 20px',
+  background: 'rgba(245, 158, 11, 0.15)',
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+  border: '1px solid rgba(245, 158, 11, 0.3)',
+  borderRadius: '16px',
+  padding: '20px 24px',
+  boxShadow: '0 4px 16px rgba(245, 158, 11, 0.08)',
 };
 
 const adviceLabelStyle: React.CSSProperties = {
   fontSize: '16px',
-  fontWeight: 'bold',
+  fontWeight: 700,
   margin: '0 0 8px 0',
-  color: '#92400e',
+  color: '#ffffff',
+  textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
 };
 
 const adviceTextStyle: React.CSSProperties = {
@@ -89,5 +97,5 @@ const adviceTextStyle: React.CSSProperties = {
   lineHeight: '1.8',
   margin: 0,
   whiteSpace: 'pre-wrap',
-  color: '#78350f',
+  color: 'rgba(255, 255, 255, 0.9)',
 };

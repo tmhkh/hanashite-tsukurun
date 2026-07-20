@@ -10,7 +10,7 @@ export interface FinishScreenProps {
 }
 
 /**
- * 完成画面コンポーネント。
+ * 完成画面コンポーネント（グラスモルフィズム）。
  * - Marp スライドをレンダリングし、1ページずつ表示
  * - スライド下に Presentation_Guide（台本＋アドバイス）をページ連動で表示
  * - 「コピー」ボタンで marp_markdown をクリップボードにコピー
@@ -50,7 +50,7 @@ export function FinishScreen({ marpMarkdown, presentationGuide, onRestart }: Fin
   return (
     <div style={containerStyle}>
       {/* 完成メッセージ */}
-      <h2 style={titleStyle}>🎉 スライドが できたよ！</h2>
+      <h2 style={titleStyle}>スライドが できたよ！</h2>
 
       {/* Marp スライドビューアー */}
       <MarpSlideViewer
@@ -73,7 +73,7 @@ export function FinishScreen({ marpMarkdown, presentationGuide, onRestart }: Fin
         style={copyButtonStyle}
         aria-label="スライドのMarkdownをコピー"
       >
-        {copied ? '✓ コピーしたよ！' : '📋 スライドを コピー'}
+        {copied ? '✓ コピーしたよ！' : 'スライドを コピー'}
       </button>
 
       {/* もう一度つくるボタン */}
@@ -97,17 +97,20 @@ const containerStyle: React.CSSProperties = {
   flexDirection: 'column',
   alignItems: 'center',
   gap: '24px',
-  padding: '24px',
+  padding: '32px 24px',
   width: '100%',
   maxWidth: '800px',
   margin: '0 auto',
+  minHeight: '100vh',
 };
 
 const titleStyle: React.CSSProperties = {
-  fontSize: '24px',
-  fontWeight: 'bold',
+  fontSize: '26px',
+  fontWeight: 700,
   margin: 0,
   textAlign: 'center',
+  color: '#ffffff',
+  textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
 };
 
 const guideContainerStyle: React.CSSProperties = {
@@ -117,25 +120,35 @@ const guideContainerStyle: React.CSSProperties = {
 
 const copyButtonStyle: React.CSSProperties = {
   fontSize: '16px',
-  fontWeight: 'bold',
-  padding: '12px 24px',
-  borderRadius: '8px',
-  border: '2px solid #10b981',
-  backgroundColor: '#ffffff',
-  color: '#10b981',
+  fontWeight: 700,
+  padding: '14px 28px',
+  borderRadius: '16px',
+  border: '1px solid rgba(16, 185, 129, 0.5)',
+  background: 'rgba(16, 185, 129, 0.2)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  color: '#ffffff',
   cursor: 'pointer',
   minWidth: '200px',
+  transition: 'all 0.3s ease',
+  boxShadow: '0 4px 16px rgba(16, 185, 129, 0.15)',
+  textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
 };
 
 const restartButtonStyle: React.CSSProperties = {
   fontSize: '18px',
-  fontWeight: 'bold',
+  fontWeight: 700,
   padding: '16px 32px',
-  borderRadius: '12px',
-  border: 'none',
-  backgroundColor: '#6366f1',
-  color: '#fff',
+  borderRadius: '16px',
+  border: '1px solid rgba(255, 255, 255, 0.4)',
+  background: 'rgba(99, 102, 241, 0.4)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  color: '#ffffff',
   cursor: 'pointer',
   minWidth: '200px',
   minHeight: '56px',
+  transition: 'all 0.3s ease',
+  boxShadow: '0 4px 16px rgba(99, 102, 241, 0.2)',
+  textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
 };

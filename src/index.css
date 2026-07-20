@@ -1,18 +1,63 @@
 /* グローバルフォントスタック: Rounded Mplus 1c → BIZ UDPGothic → sans-serif */
 /* Requirements: 10.4 */
+
+/* === Glassmorphism Design System === */
 :root {
-  font-family: 'Meiryo', 'メイリオ', sans-serif;
+  /* Typography */
+  font-family: 'Rounded Mplus 1c', 'BIZ UDPGothic', 'Meiryo', 'メイリオ', sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light;
-  color: #333333;
-  background-color: #f8f9fa;
+  color: #1e293b;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* === Glass Design Tokens === */
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-bg-strong: rgba(255, 255, 255, 0.45);
+  --glass-bg-light: rgba(255, 255, 255, 0.15);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-border-strong: rgba(255, 255, 255, 0.6);
+  --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+  --glass-shadow-hover: 0 12px 40px rgba(31, 38, 135, 0.25);
+  --glass-blur: blur(16px);
+  --glass-blur-strong: blur(24px);
+
+  /* Gradient Backgrounds */
+  --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  --bg-gradient-warm: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #fda085 100%);
+  --bg-gradient-cool: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+
+  /* Accent Colors */
+  --accent-primary: #6366f1;
+  --accent-primary-light: rgba(99, 102, 241, 0.2);
+  --accent-success: #10b981;
+  --accent-success-light: rgba(16, 185, 129, 0.2);
+  --accent-danger: #ef4444;
+  --accent-danger-light: rgba(239, 68, 68, 0.2);
+  --accent-warning: #f59e0b;
+
+  /* Text Colors */
+  --text-primary: #1e293b;
+  --text-secondary: rgba(30, 41, 59, 0.7);
+  --text-on-glass: #1e293b;
+  --text-on-gradient: #ffffff;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
 }
 
 *,
@@ -25,12 +70,57 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  font-family: 'Meiryo', 'メイリオ', sans-serif;
+  font-family: 'Rounded Mplus 1c', 'BIZ UDPGothic', 'Meiryo', 'メイリオ', sans-serif;
+  background: var(--bg-gradient);
+  background-attachment: fixed;
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
+  position: relative;
+}
+
+/* Animated background blobs for depth */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.5;
+  z-index: -1;
+  animation: float 20s ease-in-out infinite;
+}
+
+body::before {
+  width: 600px;
+  height: 600px;
+  background: rgba(251, 146, 60, 0.3);
+  top: -200px;
+  right: -200px;
+  animation-delay: -5s;
+}
+
+body::after {
+  width: 500px;
+  height: 500px;
+  background: rgba(34, 211, 238, 0.3);
+  bottom: -150px;
+  left: -150px;
+  animation-delay: -10s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -30px) scale(1.05);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
 }
 
 @keyframes spin {
