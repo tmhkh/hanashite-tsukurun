@@ -148,17 +148,22 @@ function AppContent() {
         onClick={logout}
         style={{
           position: 'fixed',
-          top: '12px',
-          right: '12px',
+          top: '16px',
+          right: '16px',
           zIndex: 1000,
-          padding: '8px 16px',
+          padding: '8px 20px',
           fontSize: '14px',
-          borderRadius: '8px',
-          border: '2px solid #e74c3c',
-          backgroundColor: '#ffffff',
-          color: '#e74c3c',
+          borderRadius: '12px',
+          border: '1px solid rgba(255, 255, 255, 0.4)',
+          background: 'rgba(255, 255, 255, 0.2)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          color: '#ffffff',
           cursor: 'pointer',
-          fontWeight: 'bold',
+          fontWeight: 600,
+          boxShadow: '0 4px 16px rgba(31, 38, 135, 0.1)',
+          transition: 'all 0.3s ease',
+          textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
         }}
         aria-label="ログアウト"
       >

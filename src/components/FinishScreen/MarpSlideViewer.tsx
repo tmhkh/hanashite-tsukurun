@@ -14,7 +14,7 @@ interface SlideContent {
 }
 
 /**
- * Marp Markdown をパースし、1ページずつスライド表示する。
+ * Marp Markdown をパースし、1ページずつスライド表示する（グラスモルフィズム）。
  * 左右ナビゲーションボタンでページ送り。
  *
  * Requirements: 7.3, 7.4
@@ -138,10 +138,13 @@ const containerStyle: React.CSSProperties = {
 const slideAreaStyle: React.CSSProperties = {
   width: '100%',
   maxWidth: '720px',
-  borderRadius: '16px',
+  borderRadius: '24px',
   overflow: 'hidden',
-  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  boxShadow: '0 8px 32px rgba(102, 126, 234, 0.25)',
+  background: 'rgba(255, 255, 255, 0.15)',
+  backdropFilter: 'blur(20px)',
+  WebkitBackdropFilter: 'blur(20px)',
+  border: '1px solid rgba(255, 255, 255, 0.3)',
+  boxShadow: '0 8px 32px rgba(31, 38, 135, 0.2)',
   minHeight: '360px',
   display: 'flex',
   alignItems: 'center',
@@ -162,7 +165,8 @@ const iconAreaStyle: React.CSSProperties = {
   width: '72px',
   height: '72px',
   borderRadius: '50%',
-  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  background: 'rgba(255, 255, 255, 0.2)',
+  border: '1px solid rgba(255, 255, 255, 0.3)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -171,7 +175,7 @@ const iconAreaStyle: React.CSSProperties = {
 
 const slideTitleStyle: React.CSSProperties = {
   fontSize: '28px',
-  fontWeight: 'bold',
+  fontWeight: 700,
   margin: 0,
   color: '#ffffff',
   textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
@@ -180,7 +184,7 @@ const slideTitleStyle: React.CSSProperties = {
 const dividerStyle: React.CSSProperties = {
   width: '60px',
   height: '3px',
-  backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  backgroundColor: 'rgba(255, 255, 255, 0.4)',
   borderRadius: '2px',
 };
 
@@ -188,8 +192,9 @@ const slideBodyStyle: React.CSSProperties = {
   fontSize: '20px',
   lineHeight: '1.8',
   margin: 0,
-  color: 'rgba(255, 255, 255, 0.95)',
+  color: 'rgba(255, 255, 255, 0.92)',
   whiteSpace: 'pre-wrap',
+  textShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
 };
 
 const pageNumStyle: React.CSSProperties = {
@@ -213,12 +218,16 @@ const navStyle: React.CSSProperties = {
 const navButtonStyle: React.CSSProperties = {
   padding: '12px 28px',
   fontSize: '16px',
-  fontWeight: 'bold',
-  borderRadius: '24px',
-  border: 'none',
-  backgroundColor: '#6366f1',
+  fontWeight: 700,
+  borderRadius: '16px',
+  border: '1px solid rgba(255, 255, 255, 0.4)',
+  background: 'rgba(255, 255, 255, 0.2)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
   color: '#ffffff',
   cursor: 'pointer',
   minWidth: '100px',
-  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+  boxShadow: '0 4px 16px rgba(31, 38, 135, 0.1)',
+  transition: 'all 0.3s ease',
+  textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
 };

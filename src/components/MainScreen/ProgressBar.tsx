@@ -24,11 +24,10 @@ const STEP_LABELS: Record<Step, string> = {
 };
 
 /**
- * すごろく風進捗バーコンポーネント
+ * すごろく風進捗バーコンポーネント（グラスモルフィズム）
  *
  * Step 1〜3 を横並びで表示し、各ステップの状態を
- * 完了（緑系）・現在（青系）・未着手（グレー系）の3状態で
- * 色とアイコンにより識別可能に表示する。
+ * 完了・現在・未着手の3状態でガラス風ノードにより識別する。
  *
  * Requirements: 6.6
  */
@@ -51,8 +50,8 @@ export default function ProgressBar({ currentStep, completedSteps }: ProgressBar
               style={{
                 ...styles.connector,
                 backgroundColor: completedSteps.includes(step) || step === currentStep
-                  ? '#4caf50'
-                  : '#e0e0e0',
+                  ? 'rgba(255, 255, 255, 0.6)'
+                  : 'rgba(255, 255, 255, 0.2)',
               }}
             />
           )}
@@ -74,8 +73,8 @@ export default function ProgressBar({ currentStep, completedSteps }: ProgressBar
           <span
             style={{
               ...styles.label,
-              color: getStepState(step) === 'upcoming' ? '#9e9e9e' : '#333',
-              fontWeight: getStepState(step) === 'current' ? 'bold' : 'normal',
+              color: getStepState(step) === 'upcoming' ? 'rgba(255, 255, 255, 0.5)' : '#ffffff',
+              fontWeight: getStepState(step) === 'current' ? 700 : 400,
             }}
           >
             {STEP_LABELS[step]}
@@ -93,21 +92,24 @@ function getNodeStyle(state: StepState): React.CSSProperties {
   switch (state) {
     case 'completed':
       return {
-        backgroundColor: '#4caf50',
-        borderColor: '#388e3c',
+        background: 'rgba(16, 185, 129, 0.6)',
+        borderColor: 'rgba(16, 185, 129, 0.8)',
         color: '#fff',
+        boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)',
       };
     case 'current':
       return {
-        backgroundColor: '#2196f3',
-        borderColor: '#1565c0',
+        background: 'rgba(99, 102, 241, 0.6)',
+        borderColor: 'rgba(99, 102, 241, 0.8)',
         color: '#fff',
+        boxShadow: '0 4px 16px rgba(99, 102, 241, 0.3)',
       };
     case 'upcoming':
       return {
-        backgroundColor: '#e0e0e0',
-        borderColor: '#bdbdbd',
-        color: '#757575',
+        background: 'rgba(255, 255, 255, 0.15)',
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+        color: 'rgba(255, 255, 255, 0.6)',
+        boxShadow: 'none',
       };
   }
 }
@@ -134,8 +136,15 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '16px 8px',
+    padding: '20px 16px',
     gap: '0',
+    background: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)',
+    borderRadius: '20px',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    width: '100%',
+    maxWidth: '400px',
   },
   stepWrapper: {
     display: 'flex',
@@ -149,27 +158,31 @@ const styles: Record<string, React.CSSProperties> = {
     top: '20px',
     right: '50%',
     width: '100%',
-    height: '4px',
+    height: '3px',
     zIndex: 0,
+    borderRadius: '2px',
   },
   node: {
     width: '40px',
     height: '40px',
     borderRadius: '50%',
-    border: '3px solid',
+    border: '2px solid',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1,
-    transition: 'background-color 0.3s ease, border-color 0.3s ease',
+    transition: 'all 0.3s ease',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
   },
   stepNumber: {
     fontSize: '16px',
-    fontWeight: 'bold',
+    fontWeight: 700,
   },
   label: {
     marginTop: '8px',
     fontSize: '14px',
     textAlign: 'center',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
   },
 };

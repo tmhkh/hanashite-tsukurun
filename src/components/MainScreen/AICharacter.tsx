@@ -7,18 +7,24 @@ export interface AICharacterProps {
 
 const bubbleStyle: CSSProperties = {
   position: 'relative',
-  backgroundColor: '#e8f4fd',
-  borderRadius: '16px',
-  padding: '16px 20px',
+  background: 'rgba(255, 255, 255, 0.25)',
+  backdropFilter: 'blur(16px)',
+  WebkitBackdropFilter: 'blur(16px)',
+  borderRadius: '20px',
+  padding: '20px 24px',
   fontSize: '18px',
   lineHeight: 1.6,
   maxWidth: '480px',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+  border: '1px solid rgba(255, 255, 255, 0.4)',
+  boxShadow: '0 8px 32px rgba(31, 38, 135, 0.15)',
+  color: '#ffffff',
+  textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
 };
 
 const speakingBubbleStyle: CSSProperties = {
   ...bubbleStyle,
   animation: 'pulse 1.5s ease-in-out infinite',
+  boxShadow: '0 8px 32px rgba(31, 38, 135, 0.25), 0 0 20px rgba(99, 102, 241, 0.2)',
 };
 
 const containerStyle: CSSProperties = {
