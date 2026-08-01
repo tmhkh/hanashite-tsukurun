@@ -13,6 +13,13 @@
 - **Marp スライド出力**: 完成時に Marp 形式の Markdown スライドを生成し、`@marp-team/marp-core` でレンダリング
 - **プレゼンガイド**: 各ページの台本＋プレゼンの構造的アドバイスで「伝え方」を学べる
 - **モック対応**: `VITE_MOCK_MODE` による開発・デモ用単独動作モード
+- **レイアウトバリエーション**: ページごとに異なるレイアウト（lead / two-column / centered）で視覚的多様性を演出
+- **CSSアニメーション**: 完成画面でのフェードイン・スライドアップ・スケールアップ等の動きのある演出
+- **カスタムMarpテーマ**: `hanashite-pop` テーマによる本格的なプレゼン品質（丸みフォント・パステルカラー）
+- **構造ビジュアライザー**: プレゼン構造の各ステップの「なぜ」と「役割」を可視化する Structure_Visualizer
+- **体験的学習ガイド**: 各ステップ完了後に構造を学べる Step_Guide（ミニガイド）の表示
+- **質問理由の表示**: AI の質問意図を明示する Question_Rationale ヒント吹き出し
+- **ポジティブフィードバック**: 完成時に子どもの自己肯定感を育てる Completion_Feedback
 
 ### 技術スタック
 
@@ -44,7 +51,10 @@ flowchart TD
         SR[Speech_Recognizer\nWeb Speech API]
         SS[SpeechSynthesis\nAI_Character 音声]
         SP[Slide_Preview]
-        PB[Progress_Bar]
+        SV[Structure_Visualizer\nステップ構造可視化]
+        SG[Step_Guide\nミニガイド]
+        QR[Question_Rationale\nヒント吹き出し]
+        CF[Completion_Feedback\nポジティブフィードバック]
         MB[Mic_Button]
     end
 
@@ -72,10 +82,13 @@ flowchart TD
     MD -.->|mock JSON| MS
     MS --> SP
     MS --> SS
-    MS --> PB
+    MS --> SV
+    MS --> SG
+    MS --> QR
     SP -->|step 3 完了| FS
     FS --> MV
     FS --> PG
+    FS --> CF
     FS -->|もう一度つくる| GS
 ```
 
@@ -110,15 +123,18 @@ src/
 │   │   ├── MainScreen.tsx     # メイン画面（スライド作成）
 │   │   ├── MicButton.tsx      # 巨大マイクボタン
 │   │   ├── AICharacter.tsx    # AIキャラクター吹き出し表示
-│   │   └── ProgressBar.tsx    # すごろく風進捗バー
+│   │   ├── StructureVisualizer.tsx  # 構造ビジュアライザー（Progress_Bar を置換）
+│   │   ├── StepGuide.tsx      # ステップ完了時ミニガイド表示
+│   │   └── QuestionRationale.tsx  # AI質問理由ヒント吹き出し
 │   ├── SlidePreview/
 │   │   ├── SlidePreview.tsx   # 3枚スライドプレビュー領域
 │   │   ├── SlideCard.tsx      # 1枚スライドカード
 │   │   └── SlideIcon.tsx      # image_keyword → Lucide アイコン
 │   └── FinishScreen/
-│       ├── FinishScreen.tsx   # 完成画面（Marpスライド＋ガイド）
-│       ├── MarpSlideViewer.tsx # Marp Markdown → HTML レンダリング＋ページナビ
-│       └── PresentationGuide.tsx # 台本＋プレゼンアドバイス表示
+│       ├── FinishScreen.tsx   # 完成画面（Marpスライド＋ガイド＋フィードバック）
+│       ├── MarpSlideViewer.tsx # Marp Markdown → HTML レンダリング＋ページナビ＋CSSアニメーション
+│       ├── PresentationGuide.tsx # 台本＋プレゼンアドバイス表示
+│       └── CompletionFeedback.tsx # ポジティブフィードバック表示
 ├── hooks/
 │   ├── useSpeechRecognizer.ts # Web Speech API ラッパー
 │   ├── useSpeechSynthesis.ts  # SpeechSynthesis ラッパー
@@ -127,6 +143,10 @@ src/
 │   └── slideApiService.ts     # HTTP クライアント（モック切替含む）
 ├── mocks/
 │   └── mockResponses.ts       # VITE_MOCK_MODE 用固定レスポンス
+├── styles/
+│   ├── marp-themes/
+│   │   └── hanashite-pop.css  # Marp_Custom_Theme（丸みフォント・パステルカラー）
+│   └── slide-animations.css   # 完成画面 Slide_Animation（@keyframes 定義）
 ├── types/
 │   └── index.ts               # 共通型定義
 └── utils/
@@ -148,7 +168,7 @@ interface GradeSelectorProps {
 ```typescript
 interface MainScreenProps {
   grade: Grade;
-  onComplete: (slides: SlideData[], marpMarkdown: string, presentationGuide: PresentationGuideEntry[]) => void;
+  onComplete: (slides: SlideData[], marpMarkdown: string, presentationGuide: PresentationGuideEntry[], completionFeedback: string) => void;
   onChangeGrade: () => void;
 }
 ```
@@ -184,13 +204,56 @@ interface SlideIconProps {
 // 存在しない場合は Star アイコンにフォールバック
 ```
 
-#### `ProgressBar`
+#### `StructureVisualizer`
 
 ```typescript
-interface ProgressBarProps {
+// Structure_Visualizer のステップメタデータ
+interface StructureVisualizerStep {
+  step: Step;
+  label: string;           // ステップ短縮名（「つかみ」「なかみ」「まとめ」）
+  description: string;     // 一行説明（例: 「みんなの きょうみを ひく」）
+  icon: string;            // Lucide アイコン名（例: "Sparkles", "MessageCircle", "Flag"）
+  state: 'completed' | 'current' | 'upcoming';
+}
+
+interface StructureVisualizerProps {
   currentStep: Step;       // 1 | 2 | 3
   completedSteps: Step[];  // 完了済みステップ配列
 }
+// Progress_Bar を置き換え、各ステップの「役割」と「なぜ必要か」を
+// アイコン＋一行説明で可視化する。ステップ状態に応じて色・ハイライトを変更。
+```
+
+#### `StepGuide`
+
+```typescript
+interface StepGuideProps {
+  step: Step;              // 完了したステップ番号
+  visible: boolean;        // 表示中かどうか
+  onDismiss: () => void;   // フェードアウト完了時コールバック
+}
+// 各ステップ完了直後に表示されるミニガイドメッセージ。
+// AI_Character 吹き出しとは視覚的に区別される独立カードデザイン。
+// 表示後 5 秒経過または次操作開始で自動フェードアウト。
+// Step 1: 「いまのが『つかみ』だよ！みんなが『なんだろう？』っておもう はじめかただね」
+// Step 2: 「これが『なかみ』！くわしく はなすと みんなに つたわるよ」
+// Step 3: 完成画面遷移に含める
+```
+
+#### `QuestionRationale`
+
+```typescript
+interface QuestionRationaleProps {
+  step: Step;              // 現在のステップ（質問理由テキストを決定）
+  visible: boolean;        // トグル状態（表示/非表示）
+  onToggle: () => void;    // 表示切替コールバック
+}
+// AI_Character 吹き出しの下部に配置する小さなヒント吹き出し。
+// デフォルトは表示（ON）。トグルボタンで非表示に切替可能。
+// 電球アイコン付き、小さめフォント、異なる背景色で視覚的に区別。
+// Step 1: 「テーマを はっきり させると、みんなに つたわりやすくなるよ」
+// Step 2: 「くわしく はなすと、きいてる ひとが イメージ しやすくなるよ」
+// Step 3: 「さいごに きもちを つたえると、みんなの こころに のこるよ」
 ```
 
 #### `FinishScreen`
@@ -199,20 +262,41 @@ interface ProgressBarProps {
 interface FinishScreenProps {
   marpMarkdown: string;            // Marp 形式の Markdown テキスト
   presentationGuide: PresentationGuideEntry[];  // 3要素の台本＋アドバイス
+  completionFeedback: string;      // AI によるポジティブフィードバックテキスト
   onRestart: () => void;
 }
+// CompletionFeedback セクションをスライドビューアー下部に表示。
+// MarpSlideViewer には CSS アニメーションが適用される。
 ```
 
 #### `MarpSlideViewer`
 
 ```typescript
 interface MarpSlideViewerProps {
-  markdown: string;               // Marp 形式 Markdown
+  markdown: string;               // Marp 形式 Markdown（theme: hanashite-pop 指定済み）
   currentPage: number;            // 現在表示中のページ (0-indexed)
   onPageChange: (page: number) => void;
 }
 // @marp-team/marp-core を使用して Markdown → HTML に変換し、
 // 1ページずつ表示。左右ナビゲーションボタンでページ送り。
+// hanashite-pop カスタムテーマを適用してレンダリング。
+// 各要素に Slide_Animation（フェードイン・スライドアップ・スケールアップ）を適用。
+// ページ遷移時にはスライドまたはフェードの CSS トランジションを適用。
+// アニメーションは slide-animations.css で定義された @keyframes を使用。
+```
+
+#### `CompletionFeedback`
+
+```typescript
+interface CompletionFeedbackProps {
+  feedback: string;               // AI によるポジティブフィードバックテキスト
+}
+// 完成画面でスライドビューアーの下部に表示されるカード。
+// AI_Character の口調（優しい先生の話し方）で、Child_User の発話内容に基づいた
+// 具体的な褒め言葉を表示する。
+// デザイン: 星アイコン付き、パステルカラー背景、角丸カード。
+// テーマ選び（Step 1）・詳細説明（Step 2）・まとめ（Step 3）の
+// それぞれに対するポジティブコメントを含む。
 ```
 
 #### `PresentationGuide`
@@ -224,6 +308,109 @@ interface PresentationGuideProps {
 // 「このページで はなすこと」ラベル下に script を表示
 // 「プレゼンの コツ」ラベル下に advice を表示
 ```
+
+### Slide_Animation CSS仕様
+
+完成画面（FinishScreen）で適用される CSS アニメーション定義。`src/styles/slide-animations.css` に格納する。
+
+```css
+/* slide-animations.css - Slide_Animation 定義 */
+
+/* ページ内要素アニメーション */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+/* ページ遷移トランジション */
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInFromLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* 適用クラス */
+.slide-title { animation: fadeIn 0.5s ease-out forwards; }
+.slide-text { animation: slideUp 0.5s ease-out 0.3s forwards; opacity: 0; }
+.slide-icon { animation: scaleUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.5s forwards; transform: scale(0); }
+.slide-page-enter { animation: slideInFromRight 0.3s ease-out forwards; }
+.slide-page-enter-reverse { animation: slideInFromLeft 0.3s ease-out forwards; }
+```
+
+**制約事項:**
+- すべてのアニメーションは純粋な CSS（`@keyframes` および `transition`）のみで実装し、JavaScript によるアニメーション制御を使用しない
+- アニメーション全体の再生時間は 1 秒以内に収め、Child_User の操作を阻害しない
+- `prefers-reduced-motion: reduce` メディアクエリを尊重し、アニメーション無効化に対応する
+
+### Marp_Custom_Theme 仕様
+
+`src/styles/marp-themes/hanashite-pop.css` に格納するカスタム Marp テーマ。
+
+```css
+/* @theme hanashite-pop */
+
+/* Marp カスタムテーマ: 子ども向け親しみやすいデザイン */
+section {
+  font-family: 'Rounded Mplus 1c', 'BIZ UDPGothic', sans-serif;
+  background: linear-gradient(135deg, #fef9f3 0%, #fdf2e9 100%);
+  color: #4a3728;
+}
+
+section.lead {
+  text-align: center;
+  justify-content: center;
+}
+
+section.lead h1 {
+  font-size: 2.5em;
+  color: #e8734a;
+}
+
+section.centered {
+  text-align: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e8f4fd 0%, #d4edfc 100%);
+}
+
+h1 {
+  color: #e8734a;
+  border-bottom: 3px solid #f9c74f;
+  padding-bottom: 0.3em;
+}
+
+blockquote {
+  border-left: 4px solid #90be6d;
+  background: #f8fff0;
+  padding: 0.5em 1em;
+  border-radius: 8px;
+}
+
+header, footer {
+  font-size: 0.6em;
+  color: #8b7355;
+}
+```
+
+**テーマ特徴:**
+- 丸みのあるフォント（Rounded Mplus 1c）
+- パステルカラーの配色（暖色系グラデーション背景）
+- 子ども向けの親しみやすいデザイン（角丸・柔らかい色彩）
+- `lead` クラス: ページ1用（タイトル中央配置・大文字）
+- `centered` クラス: ページ3用（中央配置・青系グラデーション）
 
 ### カスタムフック インターフェース
 
@@ -332,6 +519,7 @@ interface SlideApiResponse {
   next_step: 2 | 3 | 4;  // 4 = 完成
   marp_markdown: string;  // step 3 のみ Marp 形式 Markdown（3ページ）、それ以外は空文字
   presentation_guide: PresentationGuideEntry[];  // step 3 のみ3要素、それ以外は空配列
+  completion_feedback: string;  // step 3 のみ Child_User へのポジティブフィードバック、それ以外は空文字
 }
 
 // Presentation Guide エントリ
@@ -357,7 +545,31 @@ interface AppState {
   history: HistoryEntry[];       // 最大20件
   marpMarkdown: string;          // step 3 完了時に設定
   presentationGuide: PresentationGuideEntry[];  // step 3 完了時に設定
+  completionFeedback: string;    // step 3 完了時に設定（ポジティブフィードバック）
+  stepGuideVisible: boolean;     // Step_Guide 表示中フラグ
+  questionRationaleVisible: boolean;  // Question_Rationale 表示トグル（デフォルト: true）
 }
+
+// Structure_Visualizer ステップメタデータ定義
+const STRUCTURE_STEPS: StructureVisualizerStep[] = [
+  { step: 1, label: 'つかみ', description: 'みんなの きょうみを ひく', icon: 'Sparkles' },
+  { step: 2, label: 'なかみ', description: 'いちばん つたえたい ことを はなす', icon: 'MessageCircle' },
+  { step: 3, label: 'まとめ', description: 'さいごに まとめて つたえる', icon: 'Flag' },
+];
+
+// Step_Guide メッセージ定義
+const STEP_GUIDE_MESSAGES: Record<Step, string> = {
+  1: "いまのが『つかみ』だよ！みんなが『なんだろう？』っておもう はじめかただね",
+  2: "これが『なかみ』！くわしく はなすと みんなに つたわるよ",
+  3: "", // Step 3 完了時は完成画面遷移のため Step_Guide 不要
+};
+
+// Question_Rationale メッセージ定義
+const QUESTION_RATIONALE_MESSAGES: Record<Step, string> = {
+  1: "テーマを はっきり させると、みんなに つたわりやすくなるよ",
+  2: "くわしく はなすと、きいてる ひとが イメージ しやすくなるよ",
+  3: "さいごに きもちを つたえると、みんなの こころに のこるよ",
+};
 ```
 
 ### Bedrock プロンプト構造
@@ -377,7 +589,8 @@ system: |
     "ai_response_voice": "次の質問または完成メッセージ",
     "next_step": <2|3|4>,
     "marp_markdown": "<step3のみ Marp形式Markdown 3ページ、それ以外は空文字>",
-    "presentation_guide": [<step3のみ3要素、それ以外は空配列>]
+    "presentation_guide": [<step3のみ3要素、それ以外は空配列>],
+    "completion_feedback": "<step3のみ ポジティブフィードバック、それ以外は空文字>"
   }
   
   【漢字制限】
@@ -405,10 +618,20 @@ messages: <history 配列> + [{ role: "user", content: user_speech }]
 ```
 【Marp スライド生成指示】
 marp_markdownフィールドに以下の形式でMarp Markdownを生成してください：
-- 先頭に YAML フロントマター: ---\nmarp: true\ntheme: default\npaginate: true\n---
+- 先頭に YAML フロントマター: ---\nmarp: true\ntheme: hanashite-pop\npaginate: true\nheader: "{発表テーマタイトル}"\nfooter: "わたしの はっぴょう"\n---
 - 各スライドを --- で区切った3ページ構成
 - 各ページに対応するステップの slide_title を見出し（#）、slide_text を本文
 - image_keyword を <!-- icon: {keyword} --> コメントとして埋め込む
+
+【レイアウトバリエーション指示】
+- ページ1（つかみ）: Marp ディレクティブ `<!-- _class: lead -->` を適用。タイトル大きく中央配置、アイコン大サイズ表示
+- ページ2（なかみ）: 2カラムレイアウト。左カラムに slide_text 本文、右カラムに image_keyword アイコン/イラスト配置
+- ページ3（まとめ）: グラデーション背景＋中央配置テキスト。`<!-- _class: centered -->` を適用、アイコン小サイズ
+
+【テキスト装飾指示】
+- 本文テキスト内の重要キーワードに太字（`**キーワード**`）を自動適用
+- Child_User の発話に基づき適切な箇所に引用記法（`>`）を使用してメッセージ性を強調
+- 各ページの内容に関連する絵文字を本文中に1つ以上自動挿入
 
 【プレゼンガイド生成指示】
 presentation_guideフィールドに以下の3要素の配列を生成してください：
@@ -418,6 +641,14 @@ presentation_guideフィールドに以下の3要素の配列を生成してく�
   - advice例: 具体例を使って印象づける方法を小学生にわかる言葉で
 - page 3: 結論の台本（script）+ 「まとめ」の役割アドバイス（advice）
   - advice例: 気持ちを伝えてまとめる方法を小学生にわかる言葉で
+
+【ポジティブフィードバック生成指示】
+completion_feedbackフィールドに、Child_User の発表内容に対するポジティブフィードバックを生成してください：
+- AI_Character（優しい先生）の口調で記述
+- テーマ選び（Step 1）への具体的な褒め言葉を1つ以上含む
+- 詳細説明（Step 2）への具体的な褒め言葉を1つ以上含む
+- まとめ（Step 3）への具体的な褒め言葉を1つ以上含む
+- Child_User の実際の発話内容に基づいた具体的な表現を使用する
 ```
 
 ### Kanji_Filter プロンプト指示マッピング
@@ -434,7 +665,7 @@ presentation_guideフィールドに以下の3要素の配列を生成してく�
 | grade7 | 常用漢字（2136字）の範囲内で漢字を自由に使用してください。 |
 
 **適用対象フィールド（全 grade 共通）:**
-`slide_text`, `ai_response_voice`, `marp_markdown`, `presentation_guide` 内の `script` / `advice`
+`slide_text`, `ai_response_voice`, `marp_markdown`, `presentation_guide` 内の `script` / `advice`, `completion_feedback`
 
 > **バグ修正メモ**: 旧実装では `slide_text` と `ai_response_voice` のみに漢字制限を明示していたため、`script`（旧）フィールドに制限が効いていなかった。新実装ではプロンプト指示文に全出力フィールドへの適用を明記する。
 
@@ -450,7 +681,8 @@ export const MOCK_RESPONSES: Record<Step, SlideApiResponse> = {
     ai_response_voice: "いいね！いぬの どんなところが すきなの？いちばん おもしろいなって おもうことを おしえて！",
     next_step: 2,
     marp_markdown: "",
-    presentation_guide: []
+    presentation_guide: [],
+    completion_feedback: ""
   },
   2: {
     slide_title: "いちばん すきなところ",
@@ -459,7 +691,8 @@ export const MOCK_RESPONSES: Record<Step, SlideApiResponse> = {
     ai_response_voice: "ふわふわで かわいいんだね！さいごに、いぬと これから どうしたいか、みんなに つたえたい きもちを おしえて！",
     next_step: 3,
     marp_markdown: "",
-    presentation_guide: []
+    presentation_guide: [],
+    completion_feedback: ""
   },
   3: {
     slide_title: "まとめ",
@@ -469,29 +702,35 @@ export const MOCK_RESPONSES: Record<Step, SlideApiResponse> = {
     next_step: 4,
     marp_markdown: `---
 marp: true
-theme: default
+theme: hanashite-pop
 paginate: true
+header: "すきなどうぶつ"
+footer: "わたしの はっぴょう"
 ---
 
-# すきなどうぶつ
+<!-- _class: lead -->
 
-ぼくはいぬがすきです
+# すきなどうぶつ 🐕
+
+**ぼく**はいぬがすきです
 
 <!-- icon: dog -->
 
 ---
 
-# いちばん すきなところ
+# いちばん すきなところ 💕
 
-なでるとふわふわでかわいい
+> なでると ふわふわで **かわいい**
 
 <!-- icon: heart -->
 
 ---
 
-# まとめ
+<!-- _class: centered -->
 
-いぬはともだちです
+# まとめ ⭐
+
+いぬは ぼくの **ともだち**です
 
 <!-- icon: star -->`,
     presentation_guide: [
@@ -510,7 +749,8 @@ paginate: true
         script: "いぬは ぼくの だいすきな ともだちです。これからも ずっと なかよく していきたいです。",
         advice: "さいごは じぶんの きもちで しめよう。「だから ○○です」「これからも ○○したいです」と まとめると、きいている ひとが なっとく するよ！"
       }
-    ]
+    ],
+    completion_feedback: "すごいね！「いぬ」っていう みんなが しっている どうぶつを えらんだのが とっても いいね。「ふわふわで かわいい」って くわしく おしえてくれたから、みんなも いぬを なでたくなったと おもうよ。さいごに「ともだちです」って きもちを つたえられたのが すばらしいね！"
   }
 };
 ```
@@ -521,7 +761,7 @@ paginate: true
 
 *A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
-> **プリワーク要約**: 10要件・37受入基準を分析し、Property（普遍的性質・プロパティテスト向き）9項目、Example（具体例・ユニットテスト向き）多数、Edge_Case 数件を特定した。プロパティ間の重複を検討した結果、2.5・2.6・10.3（AI発話中の状態一貫性）は1つのプロパティに統合し、計8プロパティに集約した。
+> **プリワーク要約**: 17要件・受入基準を分析し、Property（普遍的性質・プロパティテスト向き）12項目、Example（具体例・ユニットテスト向き）多数、Edge_Case 数件を特定した。プロパティ間の重複を検討した結果、2.5・2.6・10.3（AI発話中の状態一貫性）は1つのプロパティに統合した。新規要件（K3, K6, K7, W1, W2, W3, W4）に対して Property 10〜12 を追加した。
 
 ---
 
@@ -597,6 +837,30 @@ paginate: true
 
 ---
 
+### Property 10: Layout_Variation の適用（Layout Variation Applied）
+
+*For any* `current_step = 3` のリクエストについて、生成された `marp_markdown` 内の3ページはそれぞれ異なるレイアウトクラスまたはディレクティブを持つ。具体的には、ページ1に `lead` クラス、ページ2に2カラム構造、ページ3に `centered` クラスが適用されている。
+
+**Validates: Requirements 11.1, 11.2, 11.3, 11.4**
+
+---
+
+### Property 11: Completion_Feedback の非空保証（Completion Feedback Non-Empty on Step 3）
+
+*For any* `current_step = 3` のリクエストについて、生成されたレスポンス内の `completion_feedback` フィールドは非空文字列であり、Child_User の発表内容に基づいた具体的なポジティブフィードバックを含む。`current_step` が 1 または 2 の場合は必ず空文字列 `""` である。
+
+**Validates: Requirements 17.5, 17.6**
+
+---
+
+### Property 12: Structure_Visualizer の状態一貫性（Structure Visualizer State Consistency）
+
+*For any* `currentStep` と `completedSteps` の組み合わせについて、Structure_Visualizer は各ステップの状態（完了済み・現在進行中・未着手）を正しく反映する。`completedSteps` に含まれるステップは「完了済み」、`currentStep` は「現在進行中」、それ以外は「未着手」として表示される。
+
+**Validates: Requirements 14.5, 14.6**
+
+---
+
 ## Error Handling
 
 ### フロントエンド エラー処理
@@ -666,11 +930,16 @@ sequenceDiagram
 - `MicButton`: disabled / recording / 通常状態の外観
 - `SlideCard`: data=null（プレースホルダー）、loading=true（ローディング）、data 有（スライド表示）
 - `SlideIcon`: 既知キーワード → 正しいアイコン、未知キーワード → Star フォールバック
-- `ProgressBar`: 各ステップ状態（未着手・現在・完了）の識別可能表示
+- `StructureVisualizer`: 各ステップ状態（未着手・現在・完了）の識別可能表示、アイコンと説明テキストの正しい表示
+- `StepGuide`: ステップ完了後のメッセージ表示、5秒経過後の自動フェードアウト、視覚的独立性
+- `QuestionRationale`: ステップ別メッセージの正しい表示、トグルボタンの表示/非表示切替、デフォルト表示状態
+- `CompletionFeedback`: フィードバックテキスト表示、パステルカラー背景・星アイコン付きカードデザイン
+- `MarpSlideViewer`: Slide_Animation 適用確認、ページ遷移トランジション
 - `useSpeechRecognizer`: タイムアウト動作、リトライカウント、最大リトライ超過
 - `slideApiService`: VITE_MOCK_MODE 切替（モックレスポンス vs fetch 呼び出し）
 - `validator.py` (Lambda): 全フィールドの有効・無効入力組合せ
 - `kanji_filter.py` (Lambda): 各 grade に対するプロンプト指示文字列検証
+- `slide_exporter.py` (Lambda): Layout_Variation ディレクティブ・太字/引用/絵文字装飾・hanashite-pop テーマ指定・ヘッダー/フッター・completion_feedback 生成指示の検証
 
 ### プロパティベーステスト（fast-check / hypothesis）
 
@@ -688,6 +957,9 @@ sequenceDiagram
 | アイコンフォールバック | Property 7 | 任意の文字列（有効・無効・空） | エラーなくアイコン描画される | fast-check (フロントエンド) |
 | 履歴リセット | Property 8 | 任意の history 状態 | GradeSelector 表示後 `history === []` | fast-check (フロントエンド) |
 | AI発話中状態一貫性 | Property 9 | 任意の ai_response_voice テキスト | isSpeaking=true → disabled=true かつテキスト表示中; isSpeaking=false → disabled=false | fast-check (フロントエンド) |
+| レイアウトバリエーション | Property 10 | 任意の step=3 レスポンス | `marp_markdown` 内の3ページが異なる Layout_Variation（lead / two-column / centered）を持つ | hypothesis (Lambda/Python) |
+| Completion_Feedback 非空 | Property 11 | 任意の step=3 リクエスト | `completion_feedback` が非空文字列; step 1,2 では空文字列 | fast-check (フロントエンド) |
+| Structure_Visualizer 状態 | Property 12 | 任意の currentStep / completedSteps 組合せ | 各ステップの表示状態が入力状態と一致 | fast-check (フロントエンド) |
 
 ### インテグレーションテスト（オプション）
 
