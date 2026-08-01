@@ -1,0 +1,7 @@
+{
+  "task_id": "task-implement-requirements-11-17",
+  "task_description": "Implement requirements 11-17 (K3, K6, K7, W1, W2, W3, W4): Layout variations in Marp output, CSS animations on FinishScreen, custom Marp theme (hanashite-pop), StructureVisualizer replacing ProgressBar, StepGuide mini-guide, QuestionRationale hints, and CompletionFeedback positive feedback card.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}

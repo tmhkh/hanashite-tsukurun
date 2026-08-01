@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "FinishScreen enhancements: Add CSS animations to MarpSlideViewer (req 12), create Marp custom theme hanashite-pop (req 13), create CompletionFeedback component (req 17), update FinishScreen to include CompletionFeedback and animations.",
+  "status": "pending",
+  "steps": [
+    "1. Create src/styles/slide-animations.css: Define @keyframes (fadeIn, slideUp, scaleUp, slideInFromRight, slideInFromLeft) and animation classes (.slide-title, .slide-text, .slide-icon, .slide-page-enter, .slide-page-enter-reverse). Add prefers-reduced-motion media query to disable all animations.",
+    "2. Create src/styles/marp-themes/hanashite-pop.css: The full Marp custom theme from design.md with @theme hanashite-pop comment, section styles, lead/two-column/centered class styles, h1 styling, blockquote styling, header/footer styling. Include Rounded Mplus 1c font and pastel color scheme.",
+    "3. Create src/components/FinishScreen/CompletionFeedback.tsx: Implements CompletionFeedbackProps { feedback: string }. Renders a card with Star icon (from lucide-react), pastel background (warm gradient), rounded corners. Displays the feedback text. Glassmorphism style consistent with the app.",
+    "4. Update src/components/FinishScreen/MarpSlideViewer.tsx: (a) Import slide-animations.css. (b) Add CSS animation classes to slide elements: .slide-title to title h1, .slide-text to body p, .slide-icon to icon area. (c) Add page transition animation: track previous page direction, apply .slide-page-enter or .slide-page-enter-reverse class on page change using a key prop or className toggle. (d) Keep the existing glassmorphism rendering (do NOT use marp-core HTML rendering - keep the custom parser). (e) Register hanashite-pop theme CSS for potential future marp-core usage.",
+    "5. Update src/components/FinishScreen/FinishScreen.tsx: (a) Import and render CompletionFeedback below PresentationGuide section. (b) Accept completionFeedback prop. (c) Import slide-animations.css at component level.",
+    "6. Update src/index.css or create import chain: Import slide-animations.css in the app entry point or in the FinishScreen component directly.",
+    "7. Add/update tests: (a) Update FinishScreen.test.tsx to verify CompletionFeedback is rendered when feedback text is provided. (b) Add CompletionFeedback.test.tsx testing rendering of feedback text and star icon. (c) Update MarpSlideViewer.test.tsx to verify animation classes are applied to slide elements."
+  ],
+  "acceptance_criteria": [
+    "slide-animations.css contains all required @keyframes (fadeIn, slideUp, scaleUp, slideInFromRight, slideInFromLeft)",
+    "slide-animations.css has prefers-reduced-motion media query that disables animations",
+    "hanashite-pop.css contains @theme hanashite-pop and all section classes (lead, two-column, centered)",
+    "CompletionFeedback renders feedback text with Star icon and pastel card design",
+    "MarpSlideViewer applies .slide-title, .slide-text, .slide-icon CSS classes to elements",
+    "MarpSlideViewer applies page transition classes on navigation",
+    "FinishScreen renders CompletionFeedback when feedback is non-empty",
+    "All animations are pure CSS (no JS animation control)",
+    "All existing and new tests pass"
+  ],
+  "verification": [
+    "unset NODE_OPTIONS && cd /projects/sandbox/hanashite-tsukurun && npx vitest --run --exclude 'e2e/**'",
+    "unset NODE_OPTIONS && cd /projects/sandbox/hanashite-tsukurun && npx tsc -b --noEmit"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

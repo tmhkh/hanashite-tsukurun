@@ -1,0 +1,22 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Environment setup: install dependencies and verify existing tests pass. Fixes the NODE_OPTIONS issue for running commands.",
+  "status": "completed",
+  "steps": [
+    "Run: unset NODE_OPTIONS && cd /projects/sandbox/hanashite-tsukurun && pnpm install",
+    "Run: pyenv global 3.13.13 && pip install hypothesis pytest boto3",
+    "Run frontend tests: unset NODE_OPTIONS && cd /projects/sandbox/hanashite-tsukurun && npx vitest --run --exclude e2e/** (expect 111 tests passing, only e2e fails due to no playwright)",
+    "Run lambda tests: cd /projects/sandbox/hanashite-tsukurun/lambda && python -m pytest -q (note: 9 pre-existing failures in test_handler.py due to rate_limiter mock issue - these are pre-existing and should not be fixed)"
+  ],
+  "acceptance_criteria": [
+    "Frontend tests pass (111 tests, exclude e2e)",
+    "Lambda tests run (92 pass, 9 pre-existing failures are acceptable)"
+  ],
+  "verification": [
+    "unset NODE_OPTIONS && cd /projects/sandbox/hanashite-tsukurun && npx vitest --run --exclude 'e2e/**'",
+    "cd /projects/sandbox/hanashite-tsukurun/lambda && python -m pytest -q"
+  ],
+  "blocked_reason": null,
+  "findings": "All dependencies already installed. Frontend: 111 tests passing (15 test files). Lambda: 92 passed, 9 pre-existing failures in test_handler.py (TestSuccessfulRequest and TestSystemPromptStructure) due to mock_invoke returning None - these are pre-existing and unrelated to our changes. NODE_OPTIONS must be unset before any node/pnpm/npx command. Python 3.13.13 via pyenv."
+}
