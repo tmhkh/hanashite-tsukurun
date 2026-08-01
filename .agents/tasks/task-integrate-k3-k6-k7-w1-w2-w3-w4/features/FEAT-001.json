@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "docs",
   "description": "Add 7 new requirements (K3, K6, K7, W1, W2, W3, W4) to specs/hanashite-tsukurun/requirements.md as requirements 11-17, following the exact same format as existing requirements 1-10. Also add new glossary terms for new concepts introduced.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Add new glossary terms to the Glossary section in requirements.md: Layout_Variation, Slide_Animation, Marp_Custom_Theme, Structure_Visualizer, Step_Guide, Question_Rationale, Completion_Feedback, and any other terms referenced by new requirements",
     "Add 要件11: レイアウトバリエーション (K3) - Each slide page has a different Marp layout based on structural role (lead for page 1, two-column for page 2, centered+gradient for page 3). Uses Marp _class directives.",
@@ -27,5 +27,5 @@
     "Verify glossary section has new terms"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 7 requirements (11-17) added successfully with glossary terms. Documentation-only change - no build/test needed."
 }
