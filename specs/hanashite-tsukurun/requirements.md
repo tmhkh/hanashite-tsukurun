@@ -101,7 +101,7 @@
 1. THE Slide_API SHALL `POST /api/create-slide` エンドポイントとして公開される。
 2. THE Slide_API SHALL 以下のフィールドをすべて含むJSONリクエストボディを受け付ける：`grade`（文字列: `"grade0"`, `"grade1"`, `"grade2"`, `"grade3"`, `"grade4"`, `"grade5"`, `"grade6"`, `"grade7"` のいずれか）、`current_step`（整数: 1, 2, 3 のいずれか）、`user_speech`（文字列: 1文字以上）、`history`（配列: `role` と `content` フィールドを持つオブジェクトの配列）。
 3. WHEN Slide_API が有効なリクエストを受信したとき、THE Lambda_Handler SHALL Bedrock_Client を通じて Amazon Bedrock（Claude 3.5 Sonnet または Haiku）を呼び出してスライドコンテンツを生成する。
-4. THE Slide_API SHALL 以下のすべてのフィールドを含むJSONレスポンスを返す：`slide_title`（文字列）、`slide_text`（文字列）、`image_keyword`（文字列: 英単語）、`ai_response_voice`（文字列）、`next_step`（整数: 2, 3, または 4）、`marp_markdown`（文字列: `current_step` が 3 のときのみ Marp 形式の Markdown スライドを含む非空文字列、それ以外は空文字列）、`presentation_guide`（配列: `current_step` が 3 のときのみ3要素を持つ配列、それ以外は空配列。各要素は `page`（整数: 1, 2, 3）、`script`（文字列: そのページで話す台本）、`advice`（文字列: プレゼンの構造・伝え方に関する小学生向けアドバイス）のフィールドを持つオブジェクト）。
+4. THE Slide_API SHALL 以下のすべてのフィールドを含むJSONレスポンスを返す：`slide_title`（文字列）、`slide_text`（文字列）、`image_keyword`（文字列: 英単語）、`ai_response_voice`（文字列）、`next_step`（整数: 2, 3, または 4）、`marp_markdown`（文字列: `current_step` が 3 のときのみ Marp 形式の Markdown スライドを含む非空文字列、それ以外は空文字列）、`presentation_guide`（配列: `current_step` が 3 のときのみ3要素を持つ配列、それ以外は空配列。各要素は `page`（整数: 1, 2, 3）、`script`（文字列: そのページで話す台本）、`advice`（文字列: プレゼンの構造・伝え方に関する小学生向けアドバイス）のフィールドを持つオブジェクト）、`completion_feedback`（文字列: `current_step` が 3 のときのみ Child_User の発表内容に対するポジティブフィードバックを含む非空文字列、それ以外は空文字列）。
 5. THE Slide_API SHALL `Access-Control-Allow-Origin` を含むCORSレスポンスヘッダーを返し、ブラウザからの直接呼び出しを許可する。
 6. IF Slide_API がリクエスト処理中にエラーが発生した場合、THEN THE Slide_API SHALL HTTPステータスコード 500 と `{"error": "<エラー内容の説明>"}` 形式のJSONレスポンスを返す。
 7. THE Slide_API SHALL リクエスト受信から10秒以内にレスポンスを返す。
@@ -139,7 +139,7 @@
 3. WHILE Slide_API へのリクエストが送信中〜レスポンス受信前のとき、THE Slide_Preview SHALL 対象スライド枠にローディングインジケーターを表示する。
 4. THE Slide_Preview SHALL `image_keyword` の値に対応する Lucide Icons のアイコンを表示する。
 5. IF `image_keyword` に対応する Lucide Icons のアイコンが存在しない場合、THEN THE Slide_Preview SHALL デフォルトとして Lucide Icons の `Star` アイコンを表示する。
-6. THE Progress_Bar SHALL Step 1〜3 の各状態（完了済み・現在・未着手）を、色またはアイコンの外観において互いに識別可能な形で表示し、現在の Step に応じてリアルタイムに更新する。
+6. THE Structure_Visualizer SHALL Step 1〜3 の各状態（完了済み・現在進行中・未着手）を、色・アイコンの変化・またはハイライトにおいて互いに識別可能な形で表示し、現在の Step に応じてリアルタイムに更新する。
 
 ---
 
@@ -149,7 +149,7 @@
 
 #### 受入基準
 
-1. WHEN `current_step` が 3 のリクエストに対して Slide_API がレスポンスを返したとき、THE Slide_Exporter SHALL `marp_markdown` フィールドに Marp 形式の Markdown テキストを含める。Marp Markdown は先頭に YAML フロントマター（`---\nmarp: true\ntheme: default\npaginate: true\n---`）を含み、各スライドを `---` で区切った3ページ構成とする。
+1. WHEN `current_step` が 3 のリクエストに対して Slide_API がレスポンスを返したとき、THE Slide_Exporter SHALL `marp_markdown` フィールドに Marp 形式の Markdown テキストを含める。Marp Markdown は先頭に YAML フロントマター（`---\nmarp: true\ntheme: hanashite-pop\npaginate: true\nheader: "{発表テーマタイトル}"\nfooter: "わたしの はっぴょう"\n---`）を含み、各スライドを `---` で区切った3ページ構成とする。
 2. THE Slide_Exporter SHALL `marp_markdown` の各ページに、対応するステップの `slide_title` を見出し（`#`）として、`slide_text` を本文として含め、`image_keyword` に対応する Lucide Icons のアイコン名をコメント（`<!-- icon: {image_keyword} -->`）として埋め込む。
 3. WHEN すべての Step（1〜3）が完了したとき、THE App SHALL 完成画面を表示し、`marp_markdown` を `@marp-team/marp-core` を使用してスライドとしてレンダリングし、1ページずつ表示する。
 4. THE App SHALL 完成画面でスライドの左右に「前へ」「次へ」のナビゲーションボタンを表示し、Child_User がスライドをページ送りできるようにする。
@@ -228,6 +228,7 @@
 4. WHEN Child_User が完成画面で「前へ」または「次へ」ボタンでページ遷移を行ったとき、THE App SHALL ページ切り替え時にスライドまたはフェードのCSSトランジションを適用する Slide_Animation を実行する。
 5. THE App SHALL すべての Slide_Animation を純粋なCSSアニメーション（`@keyframes` および `transition`）のみで実装し、JavaScriptによるアニメーション制御を使用しない。
 6. THE Slide_Animation SHALL アニメーション全体の再生時間を1秒以内に収め、Child_User の操作を阻害しない。
+7. THE App SHALL `prefers-reduced-motion: reduce` メディアクエリが有効な環境において、すべての Slide_Animation を無効化またはデュレーション0に設定し、アニメーションによる視覚的動きを抑制する。
 
 ---
 

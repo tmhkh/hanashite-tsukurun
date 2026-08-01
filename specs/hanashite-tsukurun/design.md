@@ -380,6 +380,27 @@ section.lead h1 {
   color: #e8734a;
 }
 
+section.two-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 1em;
+  align-items: center;
+}
+
+section.two-column h1 {
+  grid-column: 1 / -1;
+}
+
+section.two-column .left {
+  grid-column: 1;
+}
+
+section.two-column .right {
+  grid-column: 2;
+  text-align: center;
+}
+
 section.centered {
   text-align: center;
   justify-content: center;
@@ -410,6 +431,7 @@ header, footer {
 - パステルカラーの配色（暖色系グラデーション背景）
 - 子ども向けの親しみやすいデザイン（角丸・柔らかい色彩）
 - `lead` クラス: ページ1用（タイトル中央配置・大文字）
+- `two-column` クラス: ページ2用（CSS Grid による2カラムレイアウト）
 - `centered` クラス: ページ3用（中央配置・青系グラデーション）
 
 ### カスタムフック インターフェース
@@ -625,7 +647,7 @@ marp_markdownフィールドに以下の形式でMarp Markdownを生成してく
 
 【レイアウトバリエーション指示】
 - ページ1（つかみ）: Marp ディレクティブ `<!-- _class: lead -->` を適用。タイトル大きく中央配置、アイコン大サイズ表示
-- ページ2（なかみ）: 2カラムレイアウト。左カラムに slide_text 本文、右カラムに image_keyword アイコン/イラスト配置
+- ページ2（なかみ）: Marp ディレクティブ `<!-- _class: two-column -->` を適用。左カラムに slide_text 本文、右カラムに image_keyword アイコン/イラスト配置
 - ページ3（まとめ）: グラデーション背景＋中央配置テキスト。`<!-- _class: centered -->` を適用、アイコン小サイズ
 
 【テキスト装飾指示】
@@ -717,6 +739,8 @@ footer: "わたしの はっぴょう"
 <!-- icon: dog -->
 
 ---
+
+<!-- _class: two-column -->
 
 # いちばん すきなところ 💕
 

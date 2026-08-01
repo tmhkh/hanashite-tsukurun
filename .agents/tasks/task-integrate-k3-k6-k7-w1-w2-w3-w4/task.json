@@ -1,0 +1,14 @@
+{
+  "task_id": "task-integrate-k3-k6-k7-w1-w2-w3-w4",
+  "task_description": "Add 7 new feature requirements (K3, K6, K7, W1, W2, W3, W4) to the requirements document and update the design document to reflect architectural changes for these features.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "skipped",
+    "tests": "skipped",
+    "test_quality": "skipped",
+    "docker_build": "skipped",
+    "summary": "Documentation-only changes (specs). No build/test applicable. Verified requirements 11-17 exist in requirements.md and design.md is updated with new architecture, components, properties, and testing strategy."
+  }
+}
