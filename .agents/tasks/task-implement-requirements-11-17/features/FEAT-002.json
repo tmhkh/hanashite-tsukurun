@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Backend changes: Update slide_exporter.py prompt to include layout variation directives (lead/two-column/centered), text decoration (bold/emoji/quotes), custom theme (hanashite-pop), header/footer, and completion_feedback generation. Update handler.py to include completion_feedback in system prompt output format and enforce empty string for non-step-3. Update mock responses and types.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Update src/types/index.ts: Add completion_feedback field to SlideApiResponse interface (string type). Add completionFeedback to AppState interface. Add StructureVisualizerStep interface and Step_Guide/Question_Rationale message type constants.",
     "2. Update lambda/slide_exporter.py: Replace the step==3 prompt with the full enhanced version from design.md that includes: (a) Layout Variation directives (lead for page 1, two-column for page 2, centered for page 3), (b) Text decoration instructions (bold, quotes, emoji), (c) hanashite-pop theme in frontmatter, (d) header/footer directives, (e) presentation_guide generation, (f) NEW completion_feedback generation instructions.",
@@ -28,5 +28,5 @@
     "cd /projects/sandbox/hanashite-tsukurun/lambda && python -m pytest -q"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All changes compile and pass. Frontend: 111 tests passing (15 test files). Lambda: 92 passed, 9 pre-existing failures (rate_limiter mock issue, unchanged). Had to also update src/hooks/useSlideApi.test.ts to add completion_feedback to the mock response object used in tests. The pnpm-lock.yaml was already modified (unrelated) and left unstaged."
 }
