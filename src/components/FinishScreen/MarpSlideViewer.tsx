@@ -1,5 +1,6 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useRef } from 'react';
 import { SlideIcon } from '../SlidePreview/SlideIcon';
+import '../../styles/slide-animations.css';
 
 export interface MarpSlideViewerProps {
   markdown: string;
@@ -53,6 +54,13 @@ export function MarpSlideViewer({ markdown, currentPage, onPageChange }: MarpSli
   const totalPages = slides.length || 1;
   const currentSlide = slides[currentPage];
 
+  // Track previous page for transition direction
+  const prevPageRef = useRef(currentPage);
+  const transitionDirection = currentPage >= prevPageRef.current ? 'forward' : 'backward';
+  prevPageRef.current = currentPage;
+
+  const transitionClass = transitionDirection === 'forward' ? 'slide-page-enter' : 'slide-page-enter-reverse';
+
   const handlePrev = useCallback(() => {
     if (currentPage > 0) {
       onPageChange(currentPage - 1);
@@ -70,19 +78,19 @@ export function MarpSlideViewer({ markdown, currentPage, onPageChange }: MarpSli
       {/* スライド表示エリア */}
       <div style={slideAreaStyle}>
         {currentSlide ? (
-          <div style={slideContentStyle}>
+          <div key={currentPage} className={transitionClass} style={slideContentStyle}>
             {/* アイコン */}
             {currentSlide.icon && (
-              <div style={iconAreaStyle}>
+              <div className="slide-icon" style={iconAreaStyle}>
                 <SlideIcon keyword={currentSlide.icon} size={56} />
               </div>
             )}
             {/* タイトル */}
-            <h1 style={slideTitleStyle}>{currentSlide.title}</h1>
+            <h1 className="slide-title" style={slideTitleStyle}>{currentSlide.title}</h1>
             {/* 区切り線 */}
             <div style={dividerStyle} />
             {/* 本文 */}
-            <p style={slideBodyStyle}>{currentSlide.body}</p>
+            <p className="slide-text" style={slideBodyStyle}>{currentSlide.body}</p>
             {/* ページ番号 */}
             <span style={pageNumStyle}>{currentPage + 1} / {totalPages}</span>
           </div>

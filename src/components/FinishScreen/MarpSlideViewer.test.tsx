@@ -76,4 +76,20 @@ describe('MarpSlideViewer', () => {
     await user.click(screen.getByLabelText('前のスライド'));
     expect(onPageChange).toHaveBeenCalledWith(0);
   });
+
+  it('スライド要素にアニメーションクラスが適用される', () => {
+    const { container } = render(
+      <MarpSlideViewer markdown={mockMarkdown} currentPage={0} onPageChange={() => {}} />
+    );
+    expect(container.querySelector('.slide-title')).toBeInTheDocument();
+    expect(container.querySelector('.slide-text')).toBeInTheDocument();
+  });
+
+  it('ページ遷移時にトランジションクラスが適用される', () => {
+    const { container } = render(
+      <MarpSlideViewer markdown={mockMarkdown} currentPage={0} onPageChange={() => {}} />
+    );
+    // 初期状態では forward (slide-page-enter)
+    expect(container.querySelector('.slide-page-enter')).toBeInTheDocument();
+  });
 });
