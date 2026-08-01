@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "FinishScreen enhancements: Add CSS animations to MarpSlideViewer (req 12), create Marp custom theme hanashite-pop (req 13), create CompletionFeedback component (req 17), update FinishScreen to include CompletionFeedback and animations.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Create src/styles/slide-animations.css: Define @keyframes (fadeIn, slideUp, scaleUp, slideInFromRight, slideInFromLeft) and animation classes (.slide-title, .slide-text, .slide-icon, .slide-page-enter, .slide-page-enter-reverse). Add prefers-reduced-motion media query to disable all animations.",
     "2. Create src/styles/marp-themes/hanashite-pop.css: The full Marp custom theme from design.md with @theme hanashite-pop comment, section styles, lead/two-column/centered class styles, h1 styling, blockquote styling, header/footer styling. Include Rounded Mplus 1c font and pastel color scheme.",
@@ -28,5 +28,5 @@
     "unset NODE_OPTIONS && cd /projects/sandbox/hanashite-tsukurun && npx tsc -b --noEmit"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 138 tests pass. CSS animation classes applied via className alongside existing inline styles. CompletionFeedback renders conditionally (null when empty). MarpSlideViewer uses useRef to track previous page for transition direction, and key={currentPage} for re-mount animation trigger."
 }
