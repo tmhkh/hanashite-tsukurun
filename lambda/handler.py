@@ -114,7 +114,8 @@ def _build_system_prompt(
   "ai_response_voice": "子どもへの優しい返事（150文字以内）。テーマに応じた具体的な質問を含める。",
   "next_step": {next_step_value},
   "marp_markdown": "<step3のみMarp形式Markdown 3ページ、それ以外は空文字>",
-  "presentation_guide": [<step3のみ3要素の配列、それ以外は空配列>]
+  "presentation_guide": [<step3のみ3要素の配列、それ以外は空配列>],
+  "completion_feedback": "<step3のみ ポジティブフィードバック、それ以外は空文字>"
 }}
 
 {kanji_instruction}
@@ -197,16 +198,19 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     expected_next_step = current_step + 1 if current_step < 3 else 4
     slide_response["next_step"] = expected_next_step
 
-    # 11. step != 3 のとき marp_markdown / presentation_guide を強制空値に
+    # 11. step != 3 のとき marp_markdown / presentation_guide / completion_feedback を強制空値に
     if current_step != 3:
         slide_response["marp_markdown"] = ""
         slide_response["presentation_guide"] = []
+        slide_response["completion_feedback"] = ""
     else:
         # step == 3 でも Claude がフィールドを省略した場合のフォールバック
         if "marp_markdown" not in slide_response:
             slide_response["marp_markdown"] = ""
         if "presentation_guide" not in slide_response:
             slide_response["presentation_guide"] = []
+        if "completion_feedback" not in slide_response:
+            slide_response["completion_feedback"] = ""
 
     # 12. 成功レスポンス（CORS ヘッダー付き）
     return _make_response(200, slide_response)

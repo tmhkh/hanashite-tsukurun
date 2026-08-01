@@ -44,6 +44,7 @@ export interface SlideApiResponse {
   next_step: 2 | 3 | 4;  // 4 = 完成
   marp_markdown: string;  // step 3 のみ Marp 形式 Markdown（3ページ）、それ以外は空文字
   presentation_guide: PresentationGuideEntry[];  // step 3 のみ3要素、それ以外は空配列
+  completion_feedback: string;  // step 3 のみポジティブフィードバック、それ以外は空文字
 }
 
 // 会話履歴エントリ
@@ -62,4 +63,5 @@ export interface AppState {
   history: HistoryEntry[];       // 最大20件
   marpMarkdown: string;          // step 3 完了時に設定
   presentationGuide: PresentationGuideEntry[];  // step 3 完了時に設定
+  completionFeedback: string;    // step 3 完了時に設定
 }

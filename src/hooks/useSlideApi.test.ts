@@ -38,6 +38,7 @@ const mockResponse: SlideApiResponse = {
   next_step: 2,
   marp_markdown: '',
   presentation_guide: [],
+  completion_feedback: '',
 }
 
 describe('useSlideApi', () => {

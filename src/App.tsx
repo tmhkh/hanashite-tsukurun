@@ -70,6 +70,9 @@ function AppContent() {
   /** 完成した Presentation Guide（FinishScreen に渡す） */
   const [finishedPresentationGuide, setFinishedPresentationGuide] = useState<PresentationGuideEntry[]>([]);
 
+  /** 完成した Completion Feedback（FinishScreen に渡す） */
+  const [finishedCompletionFeedback, setFinishedCompletionFeedback] = useState('');
+
   /**
    * Slide_API レスポンス受信後に履歴へ追記する。
    *
@@ -118,10 +121,11 @@ function AppContent() {
    * Step 3 完了時のハンドラー → 完成画面へ遷移
    * Requirements: 7.4
    */
-  const handleComplete = useCallback((slides: SlideData[], marpMarkdown: string, presentationGuide: PresentationGuideEntry[]) => {
+  const handleComplete = useCallback((slides: SlideData[], marpMarkdown: string, presentationGuide: PresentationGuideEntry[], completionFeedback: string) => {
     setFinishedSlides(slides);
     setFinishedMarpMarkdown(marpMarkdown);
     setFinishedPresentationGuide(presentationGuide);
+    setFinishedCompletionFeedback(completionFeedback);
     setScreen('finish');
   }, []);
 
@@ -188,6 +192,7 @@ function AppContent() {
         <FinishScreen
           marpMarkdown={finishedMarpMarkdown}
           presentationGuide={finishedPresentationGuide}
+          completionFeedback={finishedCompletionFeedback}
           onRestart={showGradeSelector}
         />
       )}
