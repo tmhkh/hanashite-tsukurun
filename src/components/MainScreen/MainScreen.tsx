@@ -167,7 +167,10 @@ export function MainScreen({
         setCurrentStep(response.next_step as Step);
         setAiText(response.ai_response_voice);
 
-        // ステップ完了時にStepGuideを表示
+        // StepGuide: intentionally captures the pre-update `currentStep` via closure.
+        // React batches setState calls synchronously, so `currentStep` still refers to the
+        // step that was just completed. This lets the guide display the message for the
+        // finished step rather than the upcoming one.
         setStepGuideStep(currentStep);
         setStepGuideVisible(true);
 

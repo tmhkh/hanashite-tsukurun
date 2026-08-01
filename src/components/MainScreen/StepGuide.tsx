@@ -31,13 +31,8 @@ export function StepGuide({ step, visible, onDismiss }: StepGuideProps) {
   const [opacity, setOpacity] = useState(1);
   const message = STEP_GUIDE_MESSAGES[step];
 
-  // メッセージが空（step 3）の場合は何も表示しない
-  if (!message) {
-    return null;
-  }
-
   // 自動フェードタイマー
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  // All hooks must be called unconditionally (Rules of Hooks) before the early return.
   useEffect(() => {
     if (!visible) {
       setOpacity(0);
@@ -55,12 +50,16 @@ export function StepGuide({ step, visible, onDismiss }: StepGuideProps) {
   }, [visible]);
 
   // フェードアウト完了後に onDismiss を呼ぶ
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const handleTransitionEnd = useCallback(() => {
     if (opacity === 0) {
       onDismiss();
     }
   }, [opacity, onDismiss]);
+
+  // メッセージが空（step 3）の場合は何も表示しない
+  if (!message) {
+    return null;
+  }
 
   return (
     <div

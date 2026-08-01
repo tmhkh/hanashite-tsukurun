@@ -8,10 +8,21 @@ export interface MarpSlideViewerProps {
   onPageChange: (page: number) => void;
 }
 
+interface BodyPart {
+  text: string;
+  type: 'normal' | 'blockquote';
+}
+
 interface SlideContent {
   title: string;
   body: string;
   icon: string;
+  bodyParts: BodyPart[];
+}
+
+/** Strip bold markdown markers (**text**) from a string */
+function stripBold(text: string): string {
+  return text.replace(/\*\*(.+?)\*\*/g, '$1');
 }
 
 /**
@@ -32,22 +43,30 @@ export function MarpSlideViewer({ markdown, currentPage, onPageChange }: MarpSli
     return pages.map((page) => {
       const lines = page.trim().split('\n');
       let title = '';
-      let body = '';
+      const bodyParts: { text: string; type: 'normal' | 'blockquote' }[] = [];
       let icon = '';
 
       for (const line of lines) {
         const trimmed = line.trim();
         if (trimmed.startsWith('# ')) {
-          title = trimmed.slice(2).trim();
+          title = stripBold(trimmed.slice(2).trim());
         } else if (trimmed.startsWith('<!-- icon:')) {
           const match = trimmed.match(/<!-- icon:\s*(\S+)\s*-->/);
           if (match) icon = match[1];
+        } else if (/^<!--.*-->$/.test(trimmed)) {
+          // Skip HTML comment directives (e.g. <!-- _class: lead -->)
+        } else if (trimmed.startsWith('> ')) {
+          // Blockquote line: strip the '> ' prefix
+          const quoteText = trimmed.slice(2);
+          bodyParts.push({ text: stripBold(quoteText), type: 'blockquote' });
         } else if (trimmed !== '') {
-          body += (body ? '\n' : '') + trimmed;
+          bodyParts.push({ text: stripBold(trimmed), type: 'normal' });
         }
       }
 
-      return { title, body, icon };
+      const body = bodyParts.map((p) => p.text).join('\n');
+
+      return { title, body, icon, bodyParts };
     });
   }, [markdown]);
 
@@ -90,7 +109,15 @@ export function MarpSlideViewer({ markdown, currentPage, onPageChange }: MarpSli
             {/* 区切り線 */}
             <div style={dividerStyle} />
             {/* 本文 */}
-            <p className="slide-text" style={slideBodyStyle}>{currentSlide.body}</p>
+            <div className="slide-text" style={slideBodyStyle}>
+              {currentSlide.bodyParts.map((part, i) =>
+                part.type === 'blockquote' ? (
+                  <p key={i} style={blockquoteStyle}>{part.text}</p>
+                ) : (
+                  <p key={i} style={bodyParagraphStyle}>{part.text}</p>
+                )
+              )}
+            </div>
             {/* ページ番号 */}
             <span style={pageNumStyle}>{currentPage + 1} / {totalPages}</span>
           </div>
@@ -201,8 +228,25 @@ const slideBodyStyle: React.CSSProperties = {
   lineHeight: '1.8',
   margin: 0,
   color: 'rgba(255, 255, 255, 0.92)',
-  whiteSpace: 'pre-wrap',
   textShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
+  width: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '8px',
+};
+
+const bodyParagraphStyle: React.CSSProperties = {
+  margin: 0,
+  whiteSpace: 'pre-wrap',
+};
+
+const blockquoteStyle: React.CSSProperties = {
+  margin: 0,
+  paddingLeft: '16px',
+  borderLeft: '3px solid rgba(255, 255, 255, 0.4)',
+  fontStyle: 'italic',
+  whiteSpace: 'pre-wrap',
+  color: 'rgba(255, 255, 255, 0.8)',
 };
 
 const pageNumStyle: React.CSSProperties = {
