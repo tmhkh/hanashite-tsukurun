@@ -28,6 +28,13 @@
 - **Grade**: 学年区分。`grade0`（幼稚園）, `grade1`（小1）, `grade2`（小2）, `grade3`（小3）, `grade4`（小4）, `grade5`（小5）, `grade6`（小6）, `grade7`（中学生以上）の8種類
 - **Step**: スライド作成の進行ステップ。`1`（つかみ・導入）, `2`（いちばんつたえたいこと・展開）, `3`（まとめ・結論）の3段階
 - **image_keyword**: スライドに表示するSVGアイコンを選択するための英単語キー。Marp Markdown 内ではコメントとして埋め込まれる
+- **Layout_Variation**: スライドページごとの構造的役割に応じたレイアウト変更（lead, two-column, centered）
+- **Slide_Animation**: 完成画面でのスライド表示時に適用されるCSSアニメーション（フェードイン、スライドアップ等）
+- **Marp_Custom_Theme**: アプリ独自のMarpカスタムテーマ（hanashite-pop）
+- **Structure_Visualizer**: プレゼン構造マップ。各ステップの構造的役割を視覚化するコンポーネント（Progress_Barの拡張/代替）
+- **Step_Guide**: ステップ完了後に表示されるミニガイド。プレゼン構造を体験的に教えるメッセージ
+- **Question_Rationale**: AI質問の下に表示される「なぜこの質問をするのか」のヒント吹き出し
+- **Completion_Feedback**: 完成後にAIが提供する、プレゼン内容に対するポジティブなフィードバック
 
 ---
 
@@ -192,3 +199,113 @@
 2. THE App SHALL Grade_Selector 画面・メイン画面・完成画面のすべてのナビゲーション操作（学年選択、マイクボタン、「もう一度つくる」ボタンを含む）を、マウスクリックまたはタッチ操作のみで完結できるよう設計する（キーボード入力を必須としない）。
 3. WHILE AI_Character が発話中〜発話終了までのあいだ、THE App SHALL `ai_response_voice` のテキストを画面上にも同時に表示し、音声が聞こえない状況でも内容を確認できるようにする。
 4. THE App SHALL スライドおよびUI全体のフォントとして、`Rounded Mplus 1c`、`BIZ UDPGothic`、`sans-serif` の優先順位でフォールバックするフォントスタックを適用する。
+
+---
+
+### 要件11：レイアウトバリエーション
+
+**ユーザーストーリー：** 子どもとして、スライドのページごとに見た目が変わってほしい。そうすることで、単調にならず、発表がもっと楽しく見えるようにしたい。
+
+#### 受入基準
+
+1. WHEN Slide_Exporter が `marp_markdown` を生成するとき、THE Slide_Exporter SHALL ページ1（つかみ）に対して Marp ディレクティブ `<!-- _class: lead -->` を適用し、タイトルを大きく中央配置し、image_keyword に対応するアイコンを大サイズで表示する Layout_Variation（leadレイアウト）を使用する。
+2. WHEN Slide_Exporter が `marp_markdown` を生成するとき、THE Slide_Exporter SHALL ページ2（なかみ）に対して2カラムレイアウトを適用し、左カラムに `slide_text` 本文を、右カラムに image_keyword に対応するアイコンまたはイラストを配置する Layout_Variation（two-columnレイアウト）を使用する。
+3. WHEN Slide_Exporter が `marp_markdown` を生成するとき、THE Slide_Exporter SHALL ページ3（まとめ）に対してグラデーション背景と中央配置テキストを適用し、image_keyword に対応するアイコンを小サイズで添える Layout_Variation（centeredレイアウト）を使用する。
+4. THE Slide_Exporter SHALL 各ページの Layout_Variation をMarp CSSクラスまたはインラインスタイル指定として `marp_markdown` 内に埋め込み、Marp レンダリング時に自動的に適用されるようにする。
+5. THE App SHALL 完成画面の Slide_Preview において、各ページの Layout_Variation が視覚的に区別できる形でレンダリングされることを保証する。
+
+---
+
+### 要件12：アニメーション付きスライド出力
+
+**ユーザーストーリー：** 子どもとして、完成したスライドがかっこよく動いてほしい。そうすることで、自分の発表がプロっぽく見えて、もっとうれしくなるようにしたい。
+
+#### 受入基準
+
+1. WHEN App が完成画面でスライドを表示するとき、THE App SHALL 各スライドページのタイトル要素に対してフェードイン（opacity: 0→1）のCSSアニメーションを適用する Slide_Animation を実行する。
+2. WHEN App が完成画面でスライドを表示するとき、THE App SHALL 各スライドページの本文テキスト要素に対してスライドアップ（translateY: 20px→0）のCSSアニメーションを0.3秒遅延で適用する Slide_Animation を実行する。
+3. WHEN App が完成画面でスライドを表示するとき、THE App SHALL 各スライドページのアイコン/画像要素に対してスケールアップ（scale: 0→1）のポップインCSSアニメーションを適用する Slide_Animation を実行する。
+4. WHEN Child_User が完成画面で「前へ」または「次へ」ボタンでページ遷移を行ったとき、THE App SHALL ページ切り替え時にスライドまたはフェードのCSSトランジションを適用する Slide_Animation を実行する。
+5. THE App SHALL すべての Slide_Animation を純粋なCSSアニメーション（`@keyframes` および `transition`）のみで実装し、JavaScriptによるアニメーション制御を使用しない。
+6. THE Slide_Animation SHALL アニメーション全体の再生時間を1秒以内に収め、Child_User の操作を阻害しない。
+
+---
+
+### 要件13：Marp出力の本格品質向上
+
+**ユーザーストーリー：** 子どもとして、できあがったスライドが本物の発表みたいにきれいに見えてほしい。そうすることで、自信を持って発表に臨めるようにしたい。
+
+#### 受入基準
+
+1. WHEN Slide_Exporter が `marp_markdown` を生成するとき、THE Slide_Exporter SHALL 本文テキスト内の重要なキーワードに対して太字（`**キーワード**`）を自動適用する。
+2. WHEN Slide_Exporter が `marp_markdown` を生成するとき、THE Slide_Exporter SHALL Child_User の発話内容に基づき、適切な箇所に引用記法（`>`）を使用してメッセージ性を強調する。
+3. WHEN Slide_Exporter が `marp_markdown` を生成するとき、THE Slide_Exporter SHALL 各スライドページの内容に関連する絵文字を本文中に1つ以上自動挿入する。
+4. WHEN Slide_Exporter が `marp_markdown` を生成するとき、THE Slide_Exporter SHALL Marp フロントマターの `theme` フィールドに Marp_Custom_Theme（`hanashite-pop`）を指定する。
+5. WHEN Slide_Exporter が `marp_markdown` を生成するとき、THE Slide_Exporter SHALL Marp ディレクティブとしてヘッダー（発表テーマタイトル）とフッター（Child_User の名前または「わたしの はっぴょう」固定テキスト）を設定する。
+6. THE App SHALL Marp_Custom_Theme（`hanashite-pop`）のCSSファイルをアプリに同梱し、Marp レンダリング時にカスタムテーマとして適用する。Marp_Custom_Theme は丸みのあるフォント、パステルカラーの配色、子ども向けの親しみやすいデザインを含む。
+7. THE Slide_Exporter SHALL Marp_Custom_Theme 適用後も、対象 Grade に応じた漢字制限（要件5の各基準）をすべてのテキスト要素に適用する。
+
+---
+
+### 要件14：リアルタイム構造ビジュアライザー
+
+**ユーザーストーリー：** 子どもとして、いま何をしているのか、次に何をするのかが絵で見てわかるようにしたい。そうすることで、発表の作り方の流れを理解しながら進められるようにしたい。
+
+#### 受入基準
+
+1. THE App SHALL メイン画面において、Progress_Bar の代わりに Structure_Visualizer を表示する。Structure_Visualizer は Step 1〜3 の各ステップをアイコンと一行説明付きで横並びまたは縦並びに配置する。
+2. THE Structure_Visualizer SHALL Step 1（つかみ）を「みんなの きょうみを ひく」という説明テキストとともに表示する。
+3. THE Structure_Visualizer SHALL Step 2（なかみ）を「いちばん つたえたい ことを はなす」という説明テキストとともに表示する。
+4. THE Structure_Visualizer SHALL Step 3（まとめ）を「さいごに まとめて つたえる」という説明テキストとともに表示する。
+5. THE Structure_Visualizer SHALL 各ステップの状態（完了済み・現在進行中・未着手）を、色・アイコンの変化・またはハイライトにより視覚的に識別可能な形で表示する。
+6. WHEN App が次の Step に進んだとき、THE Structure_Visualizer SHALL 現在進行中のステップを即座にハイライト表示に更新する。
+7. THE Structure_Visualizer SHALL 各ステップに対応するアイコン（例: Step 1 に導入を示すアイコン、Step 2 に展開を示すアイコン、Step 3 にまとめを示すアイコン）を表示する。
+
+---
+
+### 要件15：プレゼンガイドの「作りながら表示」
+
+**ユーザーストーリー：** 子どもとして、スライドを作りながら「いまのは何だったのか」を教えてもらいたい。そうすることで、発表の構造を体験的に学びながらスライドを完成できるようにしたい。
+
+#### 受入基準
+
+1. WHEN Step 1（つかみ）が完了したとき、THE App SHALL Step_Guide として「いまのが『つかみ』だよ！みんなが『なんだろう？』っておもう はじめかただね」というメッセージを画面上に表示する。
+2. WHEN Step 2（なかみ）が完了したとき、THE App SHALL Step_Guide として「これが『なかみ』！くわしく はなすと みんなに つたわるよ」というメッセージを画面上に表示する。
+3. WHEN Step 3（まとめ）が完了したとき、THE App SHALL 完成画面への遷移を開始する。Step_Guide メッセージは完成画面の内容に含める。
+4. THE App SHALL Step_Guide メッセージを AI_Character の吹き出しとは別の、視覚的に区別可能なUIコンポーネント（背景色・枠線・アイコンが異なるカード等）として表示する。
+5. THE App SHALL Step_Guide メッセージを表示後、Child_User が次のステップの操作を開始するまで、または5秒経過するまで表示を維持する。5秒経過後は自動的にフェードアウトする。
+6. THE Step_Guide SHALL 対象 Grade に応じた漢字制限（要件5の各基準）を適用した表現で表示する。
+
+---
+
+### 要件16：AI質問の「なぜこの質問をするのか」表示
+
+**ユーザーストーリー：** 子どもとして、AIが質問する理由を知りたい。そうすることで、なぜその質問に答えるのか納得して、もっと良い発表を作れるようにしたい。
+
+#### 受入基準
+
+1. THE App SHALL AI_Character の吹き出しの下部に、Question_Rationale を表示するための小さなヒント吹き出しエリアを配置する。
+2. WHEN Step 1（つかみ）で AI_Character が質問を表示しているとき、THE App SHALL Question_Rationale として「テーマを はっきり させると、みんなに つたわりやすくなるよ」を表示する。
+3. WHEN Step 2（なかみ）で AI_Character が質問を表示しているとき、THE App SHALL Question_Rationale として「くわしく はなすと、きいてる ひとが イメージ しやすくなるよ」を表示する。
+4. WHEN Step 3（まとめ）で AI_Character が質問を表示しているとき、THE App SHALL Question_Rationale として「さいごに きもちを つたえると、みんなの こころに のこるよ」を表示する。
+5. THE App SHALL Question_Rationale の表示/非表示を切り替えるトグルボタンを提供する。WHEN Child_User がトグルボタンを操作したとき、THE App SHALL Question_Rationale の表示状態を即座に切り替える。
+6. THE App SHALL Question_Rationale のデフォルト表示状態を「表示（ON）」とする。
+7. THE Question_Rationale SHALL AI_Character の吹き出しとは視覚的に区別可能なデザイン（例: 小さめのフォントサイズ、異なる背景色、電球アイコン付き）で表示する。
+8. THE Question_Rationale SHALL 対象 Grade に応じた漢字制限（要件5の各基準）を適用した表現で表示する。
+
+---
+
+### 要件17：完成スライドの「良いところフィードバック」
+
+**ユーザーストーリー：** 子どもとして、完成した発表のどこが良かったのか教えてもらいたい。そうすることで、自信を持てるし、次の発表をもっと良くするヒントを得られるようにしたい。
+
+#### 受入基準
+
+1. WHEN すべての Step（1〜3）が完了し完成画面が表示されたとき、THE App SHALL Completion_Feedback セクションをスライドビューアーの下部に表示する。
+2. THE Completion_Feedback SHALL Child_User のテーマ選び（Step 1）に対する具体的なポジティブコメントを1つ以上含む。
+3. THE Completion_Feedback SHALL Child_User の詳細説明（Step 2）に対する具体的なポジティブコメントを1つ以上含む。
+4. THE Completion_Feedback SHALL Child_User のまとめ（Step 3）に対する具体的なポジティブコメントを1つ以上含む。
+5. WHEN Slide_API が `current_step` 3 のレスポンスを返すとき、THE Slide_API SHALL レスポンスに `completion_feedback`（文字列: Child_User の発表内容に対するポジティブフィードバック）フィールドを含める。
+6. THE Completion_Feedback SHALL AI_Character の口調（優しい先生の話し方）で記述され、Child_User の実際の発話内容に基づいた具体的な褒め言葉を含む。
+7. THE Completion_Feedback SHALL 対象 Grade に応じた漢字制限（要件5の各基準）を適用した表現で表示する。
+8. THE App SHALL Completion_Feedback を視覚的に親しみやすいデザイン（例: 星アイコン付き、パステルカラーの背景、角丸のカード）で表示する。
