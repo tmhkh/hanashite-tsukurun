@@ -11,6 +11,7 @@ export const MOCK_RESPONSES: Record<Step, SlideApiResponse> = {
     next_step: 2,
     marp_markdown: '',
     presentation_guide: [],
+    completion_feedback: '',
   },
   2: {
     slide_title: 'いちばん すきなところ',
@@ -21,6 +22,7 @@ export const MOCK_RESPONSES: Record<Step, SlideApiResponse> = {
     next_step: 3,
     marp_markdown: '',
     presentation_guide: [],
+    completion_feedback: '',
   },
   3: {
     slide_title: 'まとめ',
@@ -30,29 +32,41 @@ export const MOCK_RESPONSES: Record<Step, SlideApiResponse> = {
     next_step: 4,
     marp_markdown: `---
 marp: true
-theme: default
+theme: hanashite-pop
 paginate: true
+header: "すきなどうぶつ"
+footer: "わたしの はっぴょう"
 ---
 
-# すきなどうぶつ
+<!-- _class: lead -->
 
-ぼくはいぬがすきです
+# すきなどうぶつ 🐕
+
+ぼくは **いぬ** がすきです
 
 <!-- icon: dog -->
 
 ---
 
-# いちばん すきなところ
+<!-- _class: two-column -->
 
-なでるとふわふわでかわいい
+# いちばん すきなところ 💕
+
+なでると **ふわふわ** でかわいい
+
+> ふわふわで かわいいんだよ！
 
 <!-- icon: heart -->
 
 ---
 
-# まとめ
+<!-- _class: centered -->
 
-いぬはともだちです
+# まとめ ⭐
+
+**いぬ** はともだちです
+
+> いぬと ずっと なかよし！
 
 <!-- icon: star -->`,
     presentation_guide: [
@@ -78,5 +92,7 @@ paginate: true
           'さいごは じぶんの きもちで しめよう。「だから ○○です」「これからも ○○したいです」と まとめると、きいている ひとが なっとく するよ！',
       },
     ],
+    completion_feedback:
+      'すごいね！「いぬ」っていう みんなが しっている どうぶつを えらんだのが とっても いいね。「ふわふわで かわいい」って くわしく おしえてくれたから、みんなも いぬを なでたくなったと おもうよ。さいごに「ともだちです」って きもちを つたえられたのが すばらしいね！',
   },
 };
