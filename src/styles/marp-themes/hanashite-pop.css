@@ -1,0 +1,62 @@
+/* @theme hanashite-pop */
+
+section {
+  font-family: 'Rounded Mplus 1c', 'BIZ UDPGothic', sans-serif;
+  background: linear-gradient(135deg, #fef9f3 0%, #fdf2e9 100%);
+  color: #4a3728;
+}
+
+section.lead {
+  text-align: center;
+  justify-content: center;
+}
+
+section.lead h1 {
+  font-size: 2.5em;
+  color: #e8734a;
+}
+
+section.two-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 1em;
+  align-items: center;
+}
+
+section.two-column h1 {
+  grid-column: 1 / -1;
+}
+
+section.two-column .left {
+  grid-column: 1;
+}
+
+section.two-column .right {
+  grid-column: 2;
+  text-align: center;
+}
+
+section.centered {
+  text-align: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e8f4fd 0%, #d4edfc 100%);
+}
+
+h1 {
+  color: #e8734a;
+  border-bottom: 3px solid #f9c74f;
+  padding-bottom: 0.3em;
+}
+
+blockquote {
+  border-left: 4px solid #90be6d;
+  background: #f8fff0;
+  padding: 0.5em 1em;
+  border-radius: 8px;
+}
+
+header, footer {
+  font-size: 0.6em;
+  color: #8b7355;
+}

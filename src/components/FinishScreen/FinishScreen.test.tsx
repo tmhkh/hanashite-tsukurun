@@ -137,4 +137,30 @@ describe('FinishScreen', () => {
     const button = screen.getByText('もう一度つくる');
     expect(button).toHaveStyle({ fontSize: '18px' });
   });
+
+  it('completionFeedback が非空のとき CompletionFeedback を表示する', () => {
+    render(
+      <FinishScreen
+        marpMarkdown={mockMarpMarkdown}
+        presentationGuide={mockPresentationGuide}
+        completionFeedback="とてもよくできたね！"
+        onRestart={() => {}}
+      />
+    );
+
+    expect(screen.getByText('とてもよくできたね！')).toBeInTheDocument();
+  });
+
+  it('completionFeedback が空のとき CompletionFeedback を表示しない', () => {
+    render(
+      <FinishScreen
+        marpMarkdown={mockMarpMarkdown}
+        presentationGuide={mockPresentationGuide}
+        completionFeedback=""
+        onRestart={() => {}}
+      />
+    );
+
+    expect(screen.queryByText('とてもよくできたね！')).not.toBeInTheDocument();
+  });
 });

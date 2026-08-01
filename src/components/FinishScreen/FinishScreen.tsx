@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import type { PresentationGuideEntry } from '../../types';
 import { MarpSlideViewer } from './MarpSlideViewer';
 import { PresentationGuide } from './PresentationGuide';
+import { CompletionFeedback } from './CompletionFeedback';
 
 export interface FinishScreenProps {
   marpMarkdown: string;
@@ -19,7 +20,7 @@ export interface FinishScreenProps {
  *
  * Requirements: 7.3, 7.4, 7.5, 7.7, 7.8, 7.9
  */
-export function FinishScreen({ marpMarkdown, presentationGuide, completionFeedback: _completionFeedback, onRestart }: FinishScreenProps) {
+export function FinishScreen({ marpMarkdown, presentationGuide, completionFeedback, onRestart }: FinishScreenProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [copied, setCopied] = useState(false);
 
@@ -66,6 +67,9 @@ export function FinishScreen({ marpMarkdown, presentationGuide, completionFeedba
           <PresentationGuide guide={currentGuide} />
         </div>
       )}
+
+      {/* 完了フィードバック */}
+      <CompletionFeedback feedback={completionFeedback} />
 
       {/* コピーボタン */}
       <button
