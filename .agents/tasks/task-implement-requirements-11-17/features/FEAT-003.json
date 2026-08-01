@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Frontend MainScreen components: Replace ProgressBar with StructureVisualizer (req 14), add StepGuide (req 15), add QuestionRationale (req 16). Wire them into MainScreen.tsx and update App.tsx to pass completionFeedback.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Create src/components/MainScreen/StructureVisualizer.tsx: Implements the StructureVisualizerProps interface from design.md. Shows 3 steps horizontally with icons (Sparkles, MessageCircle, Flag from lucide-react), labels (つかみ, なかみ, まとめ), and descriptions. Uses glassmorphism styling. States: completed (green glow), current (indigo glow), upcoming (dim). Replaces ProgressBar.",
     "2. Create src/components/MainScreen/StepGuide.tsx: Implements StepGuideProps interface. Shows a card with the step-specific message (STEP_GUIDE_MESSAGES from design.md). Visually distinct from AICharacter (different background color, book/lightbulb icon). Auto-fades after 5 seconds using CSS opacity transition. Calls onDismiss after fade.",
@@ -28,5 +28,5 @@
     "unset NODE_OPTIONS && cd /projects/sandbox/hanashite-tsukurun && npx vitest --run --exclude 'e2e/**'"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 131 tests pass. FinishScreen.test.tsx needed completionFeedback prop added (6 test renders). FinishScreen uses _completionFeedback prefix to avoid unused var warning since rendering is deferred to FEAT-004. The existing ProgressBar.tsx and its test remain untouched (StructureVisualizer is the replacement but ProgressBar still exists for backward compatibility)."
 }
