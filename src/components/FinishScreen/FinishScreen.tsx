@@ -6,6 +6,7 @@ import { PresentationGuide } from './PresentationGuide';
 export interface FinishScreenProps {
   marpMarkdown: string;
   presentationGuide: PresentationGuideEntry[];
+  completionFeedback: string;
   onRestart: () => void;
 }
 
@@ -18,7 +19,7 @@ export interface FinishScreenProps {
  *
  * Requirements: 7.3, 7.4, 7.5, 7.7, 7.8, 7.9
  */
-export function FinishScreen({ marpMarkdown, presentationGuide, onRestart }: FinishScreenProps) {
+export function FinishScreen({ marpMarkdown, presentationGuide, completionFeedback: _completionFeedback, onRestart }: FinishScreenProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [copied, setCopied] = useState(false);
 
