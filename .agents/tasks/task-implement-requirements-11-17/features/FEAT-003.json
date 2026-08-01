@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Frontend MainScreen components: Replace ProgressBar with StructureVisualizer (req 14), add StepGuide (req 15), add QuestionRationale (req 16). Wire them into MainScreen.tsx and update App.tsx to pass completionFeedback.",
+  "status": "pending",
+  "steps": [
+    "1. Create src/components/MainScreen/StructureVisualizer.tsx: Implements the StructureVisualizerProps interface from design.md. Shows 3 steps horizontally with icons (Sparkles, MessageCircle, Flag from lucide-react), labels (つかみ, なかみ, まとめ), and descriptions. Uses glassmorphism styling. States: completed (green glow), current (indigo glow), upcoming (dim). Replaces ProgressBar.",
+    "2. Create src/components/MainScreen/StepGuide.tsx: Implements StepGuideProps interface. Shows a card with the step-specific message (STEP_GUIDE_MESSAGES from design.md). Visually distinct from AICharacter (different background color, book/lightbulb icon). Auto-fades after 5 seconds using CSS opacity transition. Calls onDismiss after fade.",
+    "3. Create src/components/MainScreen/QuestionRationale.tsx: Implements QuestionRationaleProps interface. Shows below AI bubble with Lightbulb icon, smaller font, different pastel background. Shows QUESTION_RATIONALE_MESSAGES[step]. Has toggle button (ON by default). Glassmorphism card style.",
+    "4. Update src/components/MainScreen/MainScreen.tsx: (a) Replace ProgressBar import/usage with StructureVisualizer. (b) Add state for stepGuideVisible and questionRationaleVisible (default true). (c) Show StepGuide after step completion (triggered when completedSteps changes, visible for 5 seconds). (d) Show QuestionRationale below AICharacter. (e) Update onComplete callback signature to include completionFeedback parameter. (f) Pass completionFeedback from API response to onComplete.",
+    "5. Update src/App.tsx: (a) Add completionFeedback state. (b) Update handleComplete to accept and store completionFeedback. (c) Pass completionFeedback to FinishScreen. (d) Update MainScreenProps to match new onComplete signature.",
+    "6. Add tests: (a) src/components/MainScreen/StructureVisualizer.test.tsx - test 3 states render correctly, icons present, descriptions match. (b) src/components/MainScreen/StepGuide.test.tsx - test message display, auto-dismiss after timeout. (c) src/components/MainScreen/QuestionRationale.test.tsx - test message display per step, toggle visibility."
+  ],
+  "acceptance_criteria": [
+    "StructureVisualizer renders 3 steps with correct labels and descriptions from design.md",
+    "StructureVisualizer visually distinguishes completed/current/upcoming states",
+    "StepGuide shows correct message for each step (exact text from STEP_GUIDE_MESSAGES)",
+    "StepGuide auto-fades after 5 seconds",
+    "QuestionRationale shows correct message per step (exact text from QUESTION_RATIONALE_MESSAGES)",
+    "QuestionRationale has working toggle (default ON)",
+    "MainScreen uses StructureVisualizer instead of ProgressBar",
+    "MainScreen shows StepGuide after step completion",
+    "MainScreen shows QuestionRationale below AI bubble",
+    "App.tsx passes completionFeedback to FinishScreen",
+    "All tests pass including new component tests"
+  ],
+  "verification": [
+    "unset NODE_OPTIONS && cd /projects/sandbox/hanashite-tsukurun && npx vitest --run --exclude 'e2e/**'"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
