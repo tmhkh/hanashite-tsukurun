@@ -4,7 +4,9 @@ import { useSlideApi } from '../../hooks/useSlideApi';
 import { useSpeechRecognizer } from '../../hooks/useSpeechRecognizer';
 import { useSpeechSynthesis } from '../../hooks/useSpeechSynthesis';
 import { SlidePreview } from '../SlidePreview/SlidePreview';
-import ProgressBar from './ProgressBar';
+import { StructureVisualizer } from './StructureVisualizer';
+import { StepGuide } from './StepGuide';
+import { QuestionRationale } from './QuestionRationale';
 import { MicButton } from './MicButton';
 import { AICharacter } from './AICharacter';
 
@@ -14,7 +16,7 @@ import { AICharacter } from './AICharacter';
 export interface MainScreenProps {
   grade: Grade;
   history: HistoryEntry[];
-  onComplete: (slides: SlideData[], marpMarkdown: string, presentationGuide: PresentationGuideEntry[]) => void;
+  onComplete: (slides: SlideData[], marpMarkdown: string, presentationGuide: PresentationGuideEntry[], completionFeedback: string) => void;
   onChangeGrade: () => void;
   onHistoryUpdate: (userSpeech: string, aiVoice: string) => void;
 }
@@ -46,6 +48,9 @@ export function MainScreen({
   const [slides, setSlides] = useState<(SlideData | null)[]>([null, null, null]);
   const [aiText, setAiText] = useState<string>(WELCOME_MESSAGE);
   const [micDisabled, setMicDisabled] = useState<boolean>(true);
+  const [stepGuideVisible, setStepGuideVisible] = useState(false);
+  const [stepGuideStep, setStepGuideStep] = useState<Step>(1);
+  const [questionRationaleVisible, setQuestionRationaleVisible] = useState(true);
 
   // --- Hooks ---
   const { call: callSlideApi, loading: apiLoading } = useSlideApi();
@@ -144,7 +149,7 @@ export function MainScreen({
           // AI発話を再生してから完了遷移
           setAiText(response.ai_response_voice);
           speak(response.ai_response_voice, () => {
-            onComplete(finalSlides, marpMd, guide);
+            onComplete(finalSlides, marpMd, guide, response.completion_feedback || '');
           });
           return;
         }
@@ -161,6 +166,11 @@ export function MainScreen({
         // 正常系: AI発話を再生し、次のステップへ
         setCurrentStep(response.next_step as Step);
         setAiText(response.ai_response_voice);
+
+        // ステップ完了時にStepGuideを表示
+        setStepGuideStep(currentStep);
+        setStepGuideVisible(true);
+
         speak(response.ai_response_voice, () => {
           setMicDisabled(false);
         });
@@ -243,8 +253,8 @@ export function MainScreen({
 
   return (
     <div style={containerStyle}>
-      {/* 進捗バー */}
-      <ProgressBar currentStep={currentStep} completedSteps={completedSteps} />
+      {/* 構造ビジュアライザー */}
+      <StructureVisualizer currentStep={currentStep} completedSteps={completedSteps} />
 
       {/* スライドプレビュー */}
       <SlidePreview
@@ -255,6 +265,20 @@ export function MainScreen({
 
       {/* AIキャラクター吹き出し */}
       <AICharacter text={aiText} isSpeaking={isSpeaking} />
+
+      {/* 質問理由ヒントカード */}
+      <QuestionRationale
+        step={currentStep}
+        visible={questionRationaleVisible}
+        onToggle={() => setQuestionRationaleVisible((v) => !v)}
+      />
+
+      {/* ステップガイド */}
+      <StepGuide
+        step={stepGuideStep}
+        visible={stepGuideVisible}
+        onDismiss={() => setStepGuideVisible(false)}
+      />
 
       {/* マイクボタン */}
       <div style={micAreaStyle}>

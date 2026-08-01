@@ -56,6 +56,7 @@ describe('FinishScreen', () => {
       <FinishScreen
         marpMarkdown={mockMarpMarkdown}
         presentationGuide={mockPresentationGuide}
+        completionFeedback=""
         onRestart={() => {}}
       />
     );
@@ -68,6 +69,7 @@ describe('FinishScreen', () => {
       <FinishScreen
         marpMarkdown={mockMarpMarkdown}
         presentationGuide={mockPresentationGuide}
+        completionFeedback=""
         onRestart={() => {}}
       />
     );
@@ -81,6 +83,7 @@ describe('FinishScreen', () => {
       <FinishScreen
         marpMarkdown={mockMarpMarkdown}
         presentationGuide={mockPresentationGuide}
+        completionFeedback=""
         onRestart={() => {}}
       />
     );
@@ -96,6 +99,7 @@ describe('FinishScreen', () => {
       <FinishScreen
         marpMarkdown={mockMarpMarkdown}
         presentationGuide={mockPresentationGuide}
+        completionFeedback=""
         onRestart={onRestart}
       />
     );
@@ -112,6 +116,7 @@ describe('FinishScreen', () => {
       <FinishScreen
         marpMarkdown={mockMarpMarkdown}
         presentationGuide={mockPresentationGuide}
+        completionFeedback=""
         onRestart={() => {}}
       />
     );
@@ -124,6 +129,7 @@ describe('FinishScreen', () => {
       <FinishScreen
         marpMarkdown={mockMarpMarkdown}
         presentationGuide={mockPresentationGuide}
+        completionFeedback=""
         onRestart={() => {}}
       />
     );
