@@ -28,5 +28,5 @@
     "unset NODE_OPTIONS && cd /projects/sandbox/hanashite-tsukurun && npx tsc -b --noEmit"
   ],
   "blocked_reason": null,
-  "findings": "All 138 tests pass. CSS animation classes applied via className alongside existing inline styles. CompletionFeedback renders conditionally (null when empty). MarpSlideViewer uses useRef to track previous page for transition direction, and key={currentPage} for re-mount animation trigger."
+  "findings": "All 136 tests pass (ProgressBar dead code removed). Review fixes applied: (1) StepGuide hooks moved above early return, (2) MarpSlideViewer parser extended to skip directives, strip bold markers, handle blockquotes, (3) ProgressBar.tsx/test removed, (4) closure capture comment added to MainScreen.tsx, (5) slide-icon and parser enrichment tests added to MarpSlideViewer.test.tsx."
 }
