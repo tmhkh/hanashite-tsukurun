@@ -10,6 +10,9 @@ import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as targets from 'aws-cdk-lib/aws-route53-targets';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as path from 'path';
 import { Construct } from 'constructs';
 
@@ -22,6 +25,21 @@ export class HanashiteTsukurunStack extends cdk.Stack {
     super(scope, id, props);
 
     const stackName = this.node.tryGetContext('stackName') || 'hanashite-tsukurun';
+
+    // ========================================
+    // カスタムドメイン設定 (hanashite.kurashi.dev)
+    // ========================================
+    const domainName = 'kurashi.dev';
+    const subDomain = `hanashite.${domainName}`;
+
+    const hostedZone = route53.HostedZone.fromLookup(this, 'KurashiDevZone', {
+      domainName,
+    });
+
+    // ACM 証明書 (us-east-1 で作成済みの ARN をコンテキストから取得)
+    const certificateArn = this.node.tryGetContext('certificateArn')
+      || ssm.StringParameter.valueForStringParameter(this, '/kurashi-dev/certificate-arn');
+    const certificate = acm.Certificate.fromCertificateArn(this, 'WildcardCert', certificateArn);
 
     // ========================================
     // 共有認証基盤の参照 (AuthPlatformStack の出力値を SSM 経由で取得)
@@ -55,6 +73,8 @@ export class HanashiteTsukurunStack extends cdk.Stack {
     // ========================================
     this.distribution = new cloudfront.Distribution(this, 'Distribution', {
       comment: `${stackName} - Frontend Distribution`,
+      domainNames: [subDomain],
+      certificate,
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(websiteBucket),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -76,6 +96,14 @@ export class HanashiteTsukurunStack extends cdk.Stack {
       ],
     });
     cdk.Tags.of(this.distribution).add('name', `${stackName}-cdn`);
+
+    // Route 53 A レコード (hanashite.kurashi.dev → CloudFront)
+    new route53.ARecord(this, 'CloudFrontAliasRecord', {
+      zone: hostedZone,
+      recordName: 'hanashite',
+      target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
+      comment: 'hanashite.kurashi.dev → CloudFront',
+    });
 
     // BucketDeployment
     new s3deploy.BucketDeployment(this, 'DeployWebsite', {
@@ -151,8 +179,8 @@ export class HanashiteTsukurunStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'CloudFrontUrl', {
-      value: `https://${this.distribution.distributionDomainName}`,
-      description: 'CloudFront distribution URL',
+      value: `https://${subDomain}`,
+      description: 'Frontend URL (カスタムドメイン)',
     });
 
     // API Gateway スロットリング

@@ -4,8 +4,11 @@ node_modules/
 # Build output
 dist/
 
-# Environment files with secrets (keep .env.development as it has no secrets)
+# Environment files (本番エンドポイント情報露出防止のため全て除外)
+.env
+.env.*
 .env.local
+.env.development
 .env.production
 .env.*.local
 
