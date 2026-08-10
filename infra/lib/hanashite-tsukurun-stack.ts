@@ -27,9 +27,9 @@ export class HanashiteTsukurunStack extends cdk.Stack {
     const stackName = this.node.tryGetContext('stackName') || 'hanashite-tsukurun';
 
     // ========================================
-    // カスタムドメイン設定 (hanashite.kurashi.dev)
+    // カスタムドメイン設定 (hanashite.<domainName>)
     // ========================================
-    const domainName = 'kurashi.dev';
+    const domainName = this.node.tryGetContext('domainName') || process.env.DOMAIN_NAME || '';
     const subDomain = `hanashite.${domainName}`;
 
     const hostedZone = route53.HostedZone.fromLookup(this, 'KurashiDevZone', {
@@ -97,12 +97,12 @@ export class HanashiteTsukurunStack extends cdk.Stack {
     });
     cdk.Tags.of(this.distribution).add('name', `${stackName}-cdn`);
 
-    // Route 53 A レコード (hanashite.kurashi.dev → CloudFront)
+    // Route 53 A レコード (hanashite.<domainName> → CloudFront)
     new route53.ARecord(this, 'CloudFrontAliasRecord', {
       zone: hostedZone,
       recordName: 'hanashite',
       target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(this.distribution)),
-      comment: 'hanashite.kurashi.dev → CloudFront',
+      comment: `hanashite.${domainName} → CloudFront`,
     });
 
     // BucketDeployment
