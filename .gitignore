@@ -1,3 +1,6 @@
+# Agents (内部タスク管理)
+.agents/
+
 # Dependencies
 node_modules/
 
