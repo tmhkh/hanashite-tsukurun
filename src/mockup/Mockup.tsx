@@ -1,93 +1,86 @@
 import { useEffect, useState } from 'react';
-import {
-  Camera,
-  ChevronLeft,
-  ChevronRight,
-  Home,
-  Mic,
-  Pencil,
-  Play,
-  Square,
-  Users,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Home, Mic, Pencil, Play, Square, Users } from 'lucide-react';
 import './mockup.css';
 import {
   CHILDREN,
   FRIEND_QUESTIONS,
-  LANES,
   NEW_ATTEMPT,
   PARENT_NOTE,
   PAST_ATTEMPTS,
-  TALK_TURNS,
   type Attempt,
-  type Lane,
-  type TalkCard,
 } from './mockData';
+import MakeFlow from './make/MakeFlow';
+import {
+  canPractice,
+  emptyProject,
+  laneLabel,
+  loadProject,
+  orderedCards,
+  sampleProject,
+  saveProject,
+  type Card,
+  type Project,
+} from './make/makeModel';
 
 /**
- * 「つくる → れんしゅう → ほんばん」の全体像をつかむためのクリックできるモックアップ。
- * 音声認識・録音・AI はすべて固定データで代用している（?mockup を付けて開く）。
+ * 「つくる → れんしゅう → ほんばん」の全体像をつかむためのモックアップ（?mockup を付けて開く）。
+ * 「つくる」は実際に作れる（声・キーボードで入力し、このブラウザに保存する）。
+ * 「れんしゅう」「ほんばん」の録音・ふりかえり・質問は固定データで代用している。
  */
 
-type View = 'home' | 'talk' | 'arrange' | 'practice' | 'review' | 'stage' | 'qa' | 'parent';
+type View = 'home' | 'make' | 'practice' | 'review' | 'stage' | 'qa' | 'parent';
 
-const ACTS: { label: string; views: View[]; first: View }[] = [
-  { label: '1 つくる', views: ['talk', 'arrange'], first: 'talk' },
-  { label: '2 れんしゅう', views: ['practice', 'review'], first: 'practice' },
-  { label: '3 ほんばん', views: ['stage', 'qa'], first: 'stage' },
+const ACTS: { label: string; view: View; views: View[] }[] = [
+  { label: '1 つくる', view: 'make', views: ['make'] },
+  { label: '2 れんしゅう', view: 'practice', views: ['practice', 'review'] },
+  { label: '3 ほんばん', view: 'stage', views: ['stage', 'qa'] },
 ];
-
-/** カードが足りているとみなす枚数 */
-const ENOUGH_CARDS = 4;
-
-/** 途中の幕から開いたときに使う、並べ終えた状態のカード */
-const ARRANGED_LANES: Lane[] = ['start', 'start', 'middle', 'pool', 'middle', 'end'];
-const ARRANGED_CARDS: TalkCard[] = TALK_TURNS.map((t, i) => ({
-  id: i,
-  text: t.answer,
-  keyword: t.keyword,
-  lane: ARRANGED_LANES[i],
-  picture: i === 2 ? 'draw' : i === 0 ? 'photo' : null,
-}));
 
 function mmss(seconds: number): string {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
-function orderedCards(cards: TalkCard[]): TalkCard[] {
-  return LANES.flatMap((l) => cards.filter((c) => c.lane === l.id));
-}
-
 export default function Mockup() {
   const [view, setView] = useState<View>('home');
   const [childId, setChildId] = useState(CHILDREN[0].id);
-  const [cards, setCards] = useState<TalkCard[]>([]);
+  const [project, setProject] = useState<Project>(loadProject);
+  const [saved, setSaved] = useState(true);
   const [attempts, setAttempts] = useState<Attempt[]>(PAST_ATTEMPTS);
+  /** 作り直したときに「つくる」を最初の画面から始め直すための番号 */
+  const [makeRound, setMakeRound] = useState(0);
+
+  useEffect(() => {
+    setSaved(saveProject(project));
+  }, [project]);
 
   const child = CHILDREN.find((c) => c.id === childId) ?? CHILDREN[0];
-  const ordered = orderedCards(cards);
+  // まだ並べ終えていないときは、見本のカードで「れんしゅう」「ほんばん」を見せる
+  const ready = canPractice(project.cards);
+  const shown = ready ? project : sampleProject();
+  const cards = orderedCards(shown.cards);
 
-  const go = (next: View) => {
-    // 「つくる」を通らずに開いた画面でも中身が入っているようにする
-    const needsCards = next !== 'home' && next !== 'talk';
-    const empty = next === 'arrange' ? cards.length === 0 : ordered.length === 0;
-    if (needsCards && empty) setCards(ARRANGED_CARDS);
-    setView(next);
+  const startOver = (next: Project) => {
+    setProject(next);
+    setMakeRound((n) => n + 1);
+    setView('make');
   };
 
   const finishPractice = (seconds: number) => {
-    setAttempts((prev) => [...prev, { ...NEW_ATTEMPT, no: prev.length + 1, seconds }]);
-    go('review');
+    setAttempts((prev) => [
+      ...prev,
+      { ...NEW_ATTEMPT, no: prev.length + 1, seconds, said: cards.length, total: cards.length },
+    ]);
+    setView('review');
   };
 
   if (view === 'stage') {
-    return <StageView cards={ordered} onDone={() => go('qa')} onExit={() => go('home')} />;
+    return <StageView cards={cards} onDone={() => setView('qa')} onExit={() => setView('home')} />;
   }
 
   return (
     <div className="mk-root">
       <header className="mk-header">
-        <button className="mk-chip" onClick={() => go('home')} aria-label="ホームへ もどる">
+        <button className="mk-chip" onClick={() => setView('home')} aria-label="ホームへ もどる">
           <Home size={18} aria-hidden /> ホーム
         </button>
         <nav className="mk-acts" aria-label="3つのまく">
@@ -95,7 +88,7 @@ export default function Mockup() {
             <button
               key={act.label}
               className={`mk-act${act.views.includes(view) ? ' is-current' : ''}`}
-              onClick={() => go(act.first)}
+              onClick={() => setView(act.view)}
             >
               {act.label}
             </button>
@@ -105,27 +98,42 @@ export default function Mockup() {
       </header>
 
       <main className="mk-main">
+        {view !== 'home' && view !== 'make' && !ready && (
+          <p className="mk-note mk-banner">
+            まだ カードを ならべおわって いないので、みほんの はっぴょうを 出しているよ
+          </p>
+        )}
         {view === 'home' && (
           <HomeView
             childId={childId}
             onChild={setChildId}
             childName={child.name}
+            project={project}
             practiceCount={attempts.length}
-            go={go}
+            go={setView}
+            onNew={() => startOver(emptyProject())}
+            onSample={() => startOver(sampleProject())}
           />
         )}
-        {view === 'talk' && <TalkView cards={cards} setCards={setCards} go={go} />}
-        {view === 'arrange' && <ArrangeView cards={cards} setCards={setCards} go={go} />}
-        {view === 'practice' && <PracticeView cards={ordered} onFinish={finishPractice} />}
-        {view === 'review' && <ReviewView attempts={attempts} go={go} />}
-        {view === 'qa' && <QaView go={go} />}
-        {view === 'parent' && <ParentView childName={child.name} attempts={attempts} go={go} />}
+        {view === 'make' && (
+          <MakeFlow
+            key={makeRound}
+            project={project}
+            update={setProject}
+            saved={saved}
+            onPractice={() => setView('practice')}
+          />
+        )}
+        {view === 'practice' && <PracticeView cards={cards} onFinish={finishPractice} />}
+        {view === 'review' && <ReviewView attempts={attempts} go={setView} />}
+        {view === 'qa' && <QaView go={setView} />}
+        {view === 'parent' && (
+          <ParentView childName={child.name} title={shown.title} attempts={attempts} go={setView} />
+        )}
       </main>
     </div>
   );
 }
-
-type SetCards = (fn: (prev: TalkCard[]) => TalkCard[]) => void;
 
 /* ---------- ホーム ---------- */
 
@@ -133,10 +141,17 @@ function HomeView(props: {
   childId: string;
   onChild: (id: string) => void;
   childName: string;
+  project: Project;
   practiceCount: number;
   go: (v: View) => void;
+  onNew: () => void;
+  onSample: () => void;
 }) {
-  const { childId, onChild, childName, practiceCount, go } = props;
+  const { childId, onChild, childName, project, practiceCount, go, onNew, onSample } = props;
+  const [confirmNew, setConfirmNew] = useState(false);
+  const started = project.title !== '' || project.cards.length > 0;
+  const placed = orderedCards(project.cards).length;
+
   return (
     <>
       <section className="mk-panel">
@@ -156,31 +171,61 @@ function HomeView(props: {
         <p className="mk-note">学年は おぼえているので、毎回 えらばなくて いいよ</p>
       </section>
 
-      <section className="mk-panel">
-        <div className="mk-row mk-between">
-          <h2 className="mk-h2">カブトムシを そだてた</h2>
-          <span className="mk-pill">はっぴょうまで あと 5日</span>
-        </div>
-        <p className="mk-note">
-          れんしゅう {practiceCount}回 ・ きょうの ミッション：1回 通して 話す（3分）
-        </p>
-        <div className="mk-row">
-          <button className="mk-btn" onClick={() => go('arrange')}>
-            <Pencil size={20} aria-hidden /> カードを なおす
-          </button>
-          <button className="mk-btn is-primary" onClick={() => go('practice')}>
-            <Mic size={20} aria-hidden /> れんしゅうする
-          </button>
-          <button className="mk-btn" onClick={() => go('stage')}>
-            <Play size={20} aria-hidden /> ほんばんを する
-          </button>
-        </div>
-      </section>
+      {started ? (
+        <section className="mk-panel">
+          <div className="mk-row mk-between">
+            <h2 className="mk-h2">{project.title || 'なまえの ない はっぴょう'}</h2>
+            <span className="mk-pill">はっぴょうまで あと 5日</span>
+          </div>
+          <p className="mk-note">
+            カード {project.cards.length}まい（ならべたのは {placed}まい）・ れんしゅう{' '}
+            {practiceCount}回
+          </p>
+          <div className="mk-row">
+            <button className="mk-btn is-primary" onClick={() => go('make')}>
+              <Pencil size={20} aria-hidden /> つづきを つくる
+            </button>
+            <button className="mk-btn" onClick={() => go('practice')}>
+              <Mic size={20} aria-hidden /> れんしゅうする
+            </button>
+            <button className="mk-btn" onClick={() => go('stage')}>
+              <Play size={20} aria-hidden /> ほんばんを する
+            </button>
+          </div>
+          <div className="mk-row">
+            {confirmNew ? (
+              <>
+                <span className="mk-note">いまの はっぴょうは きえるよ。いい？</span>
+                <button className="mk-chip is-danger" onClick={onNew}>
+                  けして あたらしく つくる
+                </button>
+                <button className="mk-chip" onClick={() => setConfirmNew(false)}>
+                  やめる
+                </button>
+              </>
+            ) : (
+              <button className="mk-chip" onClick={() => setConfirmNew(true)}>
+                ＋ あたらしい はっぴょうに する
+              </button>
+            )}
+          </div>
+        </section>
+      ) : (
+        <section className="mk-panel mk-center">
+          <p className="mk-question">はっぴょうを つくろう！</p>
+          <p className="mk-note">しつもんに こたえると カードが できるよ。それを ならべるだけ</p>
+          <div className="mk-row mk-centered">
+            <button className="mk-btn is-primary" onClick={onNew}>
+              ＋ あたらしい はっぴょうを つくる
+            </button>
+            <button className="mk-btn" onClick={onSample}>
+              みほんを 見てみる
+            </button>
+          </div>
+        </section>
+      )}
 
-      <div className="mk-row">
-        <button className="mk-btn is-primary mk-grow" onClick={() => go('talk')}>
-          ＋ あたらしい はっぴょうを つくる
-        </button>
+      <div className="mk-row mk-end">
         <button className="mk-btn" onClick={() => go('parent')}>
           <Users size={20} aria-hidden /> おうちの人へ
         </button>
@@ -189,184 +234,9 @@ function HomeView(props: {
   );
 }
 
-/* ---------- 1. つくる：話す ---------- */
-
-function TalkView(props: { cards: TalkCard[]; setCards: SetCards; go: (v: View) => void }) {
-  const { cards, setCards, go } = props;
-  const turn = TALK_TURNS[cards.length];
-  const enough = cards.length >= ENOUGH_CARDS;
-
-  const speak = () => {
-    if (!turn) return;
-    setCards((prev) => [
-      ...prev,
-      { id: prev.length, text: turn.answer, keyword: turn.keyword, lane: 'pool', picture: null },
-    ]);
-  };
-
-  return (
-    <>
-      <section className="mk-panel mk-center">
-        <p className="mk-step">話した ことばが そのまま カードに なるよ</p>
-        {turn ? (
-          <>
-            <p className="mk-question">{turn.question}</p>
-            <p className="mk-why">どうして きくの？ … {turn.why}</p>
-            <button className="mk-mic" onClick={speak} aria-label="マイクで話す">
-              <Mic size={56} aria-hidden />
-            </button>
-            <p className="mk-note">（モック）おすと、話した ことに なります</p>
-          </>
-        ) : (
-          <p className="mk-question">たくさん 話せたね！ カードを ならべよう</p>
-        )}
-      </section>
-
-      <section className="mk-panel">
-        <div className="mk-row mk-between">
-          <h2 className="mk-h2">あつまった カード {cards.length}まい</h2>
-          {enough && (
-            <button className="mk-btn is-primary" onClick={() => go('arrange')}>
-              カードを ならべる <ChevronRight size={20} aria-hidden />
-            </button>
-          )}
-        </div>
-        {cards.length === 0 ? (
-          <p className="mk-note">まだ カードは ないよ。マイクを おして 話してみよう</p>
-        ) : (
-          <ul className="mk-cards">
-            {cards.map((c) => (
-              <li key={c.id} className="mk-card">
-                {c.text}
-              </li>
-            ))}
-          </ul>
-        )}
-        {!enough && cards.length > 0 && (
-          <p className="mk-note">あと {ENOUGH_CARDS - cards.length}まい あると ならべられるよ</p>
-        )}
-      </section>
-    </>
-  );
-}
-
-/* ---------- 1. つくる：ならべる ---------- */
-
-function ArrangeView(props: { cards: TalkCard[]; setCards: SetCards; go: (v: View) => void }) {
-  const { cards, setCards, go } = props;
-  const [picked, setPicked] = useState<number | null>(null);
-
-  const moveTo = (lane: Lane) => {
-    if (picked === null) return;
-    setCards((prev) => {
-      const card = prev.find((c) => c.id === picked);
-      if (!card) return prev;
-      // 置いた順に並ぶよう、動かしたカードを末尾へ回す
-      return [...prev.filter((c) => c.id !== picked), { ...card, lane }];
-    });
-    setPicked(null);
-  };
-
-  const setPicture = (id: number, picture: TalkCard['picture']) => {
-    setCards((prev) => prev.map((c) => (c.id === id ? { ...c, picture } : c)));
-  };
-
-  const renderCard = (c: TalkCard, withPicture: boolean) => (
-    <li key={c.id} className="mk-card-wrap">
-      <button
-        className={`mk-card is-button${picked === c.id ? ' is-picked' : ''}`}
-        aria-pressed={picked === c.id}
-        onClick={() => setPicked(picked === c.id ? null : c.id)}
-      >
-        {c.text}
-      </button>
-      {withPicture && (
-        <div className="mk-row mk-tight">
-          {c.picture ? (
-            <button className="mk-chip is-on" onClick={() => setPicture(c.id, null)}>
-              {c.picture === 'draw' ? 'じぶんの 絵' : 'しゃしん'} ✓
-            </button>
-          ) : (
-            <>
-              <button className="mk-chip" onClick={() => setPicture(c.id, 'draw')}>
-                <Pencil size={14} aria-hidden /> 絵を かく
-              </button>
-              <button className="mk-chip" onClick={() => setPicture(c.id, 'photo')}>
-                <Camera size={14} aria-hidden /> しゃしん
-              </button>
-            </>
-          )}
-        </div>
-      )}
-    </li>
-  );
-
-  const pool = cards.filter((c) => c.lane === 'pool');
-  const placed = cards.length - pool.length;
-  const allLanesUsed = LANES.every((l) => cards.some((c) => c.lane === l.id));
-
-  return (
-    <>
-      <section className="mk-panel">
-        <p className="mk-step">
-          {picked === null
-            ? 'カードを タッチして えらぼう'
-            : '「はじめ・なか・おわり」の どこに おく？ おきたい ところを タッチ'}
-        </p>
-        <div className="mk-row mk-between">
-          <h2 className="mk-h2">まだ おいていない カード</h2>
-          {picked !== null && (
-            <button className="mk-chip" onClick={() => moveTo('pool')}>
-              ここに もどす
-            </button>
-          )}
-        </div>
-        {pool.length === 0 ? (
-          <p className="mk-note">ぜんぶ おいたよ。つかわない カードは ここに もどしても いいよ</p>
-        ) : (
-          <ul className="mk-cards">{pool.map((c) => renderCard(c, false))}</ul>
-        )}
-      </section>
-
-      <div className="mk-lanes">
-        {LANES.map((lane) => (
-          <section key={lane.id} className="mk-panel mk-lane">
-            <button
-              className={`mk-lane-head${picked !== null ? ' is-target' : ''}`}
-              onClick={() => moveTo(lane.id)}
-              disabled={picked === null}
-              aria-label={`${lane.label}に おく`}
-            >
-              <span className="mk-h2">{lane.label}</span>
-              <span className="mk-note">{lane.hint}</span>
-            </button>
-            <ul className="mk-cards is-column">
-              {cards.filter((c) => c.lane === lane.id).map((c) => renderCard(c, true))}
-            </ul>
-          </section>
-        ))}
-      </div>
-
-      <div className="mk-row mk-between">
-        <button className="mk-btn" onClick={() => go('talk')}>
-          <ChevronLeft size={20} aria-hidden /> もっと 話す
-        </button>
-        <button
-          className="mk-btn is-primary"
-          disabled={!allLanesUsed}
-          onClick={() => go('practice')}
-        >
-          {allLanesUsed ? `${placed}まいで れんしゅうする` : '3つ ぜんぶに 1まいずつ おこう'}
-          <ChevronRight size={20} aria-hidden />
-        </button>
-      </div>
-    </>
-  );
-}
-
 /* ---------- 2. れんしゅう ---------- */
 
-function PracticeView(props: { cards: TalkCard[]; onFinish: (seconds: number) => void }) {
+function PracticeView(props: { cards: Card[]; onFinish: (seconds: number) => void }) {
   const { cards, onFinish } = props;
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -407,7 +277,7 @@ function PracticeView(props: { cards: TalkCard[]; onFinish: (seconds: number) =>
         <p className="mk-note">
           {recording
             ? 'ろくおん中… 話しおわったら もういちど おしてね'
-            : 'おすと ろくおんが はじまるよ'}
+            : '（モック）おすと ろくおんした ことに なります'}
         </p>
       </section>
 
@@ -416,7 +286,7 @@ function PracticeView(props: { cards: TalkCard[]; onFinish: (seconds: number) =>
         <ol className="mk-cue">
           {cards.map((c) => (
             <li key={c.id} className="mk-card">
-              <span className="mk-pill">{LANES.find((l) => l.id === c.lane)?.label}</span>
+              <span className="mk-pill">{laneLabel(c.lane)}</span>
               {c.keyword}
             </li>
           ))}
@@ -500,7 +370,7 @@ function ReviewView(props: { attempts: Attempt[]; go: (v: View) => void }) {
 
 /* ---------- 3. ほんばん：紙芝居 ---------- */
 
-function StageView(props: { cards: TalkCard[]; onDone: () => void; onExit: () => void }) {
+function StageView(props: { cards: Card[]; onDone: () => void; onExit: () => void }) {
   const { cards, onDone, onExit } = props;
   const [index, setIndex] = useState(0);
   const [seconds, setSeconds] = useState(0);
@@ -511,8 +381,6 @@ function StageView(props: { cards: TalkCard[]; onDone: () => void; onExit: () =>
   }, []);
 
   const card = cards[index];
-  // カードの用意が1描画ぶん遅れることがあるので、そろうまで何も出さない
-  if (!card) return null;
   const last = index === cards.length - 1;
 
   return (
@@ -525,11 +393,11 @@ function StageView(props: { cards: TalkCard[]; onDone: () => void; onExit: () =>
       </div>
 
       <div className="mk-stage-slide">
-        <div className="mk-stage-picture">
-          {card.picture === 'draw' && 'じぶんで かいた 絵'}
-          {card.picture === 'photo' && 'とった しゃしん'}
-          {card.picture === null && '（絵は なし）'}
-        </div>
+        {card.picture ? (
+          <img className="mk-stage-picture" src={card.picture} alt="つけた 絵" />
+        ) : (
+          <div className="mk-stage-picture is-empty">（絵は なし）</div>
+        )}
         <p className="mk-stage-keyword">{card.keyword}</p>
       </div>
 
@@ -598,8 +466,13 @@ function QaView(props: { go: (v: View) => void }) {
 
 /* ---------- おうちの人へ ---------- */
 
-function ParentView(props: { childName: string; attempts: Attempt[]; go: (v: View) => void }) {
-  const { childName, attempts, go } = props;
+function ParentView(props: {
+  childName: string;
+  title: string;
+  attempts: Attempt[];
+  go: (v: View) => void;
+}) {
+  const { childName, title, attempts, go } = props;
   const first = attempts[0];
   const latest = attempts[attempts.length - 1];
   return (
@@ -607,7 +480,7 @@ function ParentView(props: { childName: string; attempts: Attempt[]; go: (v: Vie
       <section className="mk-panel">
         <h1 className="mk-title">おうちの方へ</h1>
         <p className="mk-note">
-          {childName}さん ・「カブトムシを そだてた」・ 発表まであと5日 ・ 練習 {attempts.length}回
+          {childName}さん ・「{title}」・ 発表まであと5日 ・ 練習 {attempts.length}回
         </p>
         <div className="mk-feedback is-good">
           <span className="mk-pill">今日ほめるポイント</span>

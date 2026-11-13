@@ -402,14 +402,307 @@
 }
 
 .mk-stage-picture {
-  display: grid;
-  place-items: center;
   width: min(100%, 520px);
   aspect-ratio: 4 / 3;
+  object-fit: contain;
   border-radius: var(--radius-lg);
+  background: #fff;
+}
+
+.mk-stage-picture.is-empty {
+  display: grid;
+  place-items: center;
   border: 2px dashed var(--glass-border-strong);
   background: var(--glass-bg-light);
   font-size: 18px;
+}
+
+/* ---------- つくる ---------- */
+
+.mk-end {
+  justify-content: flex-end;
+}
+
+.mk-centered {
+  justify-content: center;
+}
+
+.mk-banner {
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.mk-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mk-chip.is-danger {
+  background: var(--accent-danger);
+  border-color: transparent;
+}
+
+.mk-h2 svg,
+.mk-why svg {
+  vertical-align: -2px;
+}
+
+.mk-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.mk-voice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.mk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 入力らん。読みやすさ優先で濃いガラスに濃い文字 */
+.mk-input {
+  width: 100%;
+  max-width: 640px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border-strong);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text-on-glass);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  resize: vertical;
+}
+
+.mk-input::placeholder {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.mk-input:focus-visible,
+.mk-root button:focus-visible,
+.mk-stage button:focus-visible,
+.mk-overlay button:focus-visible {
+  outline: 3px solid var(--accent-warning);
+  outline-offset: 2px;
+}
+
+.mk-templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.mk-template {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 84px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-light);
+  font: inherit;
+  color: inherit;
+  text-shadow: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mk-template.is-on {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--accent-primary);
+  text-shadow: none;
+}
+
+.mk-qlist {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mk-qlist .mk-chip {
+  width: 100%;
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+
+.mk-meter {
+  height: 12px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+
+.mk-meter > span {
+  display: block;
+  height: 100%;
+  background: #fff;
+  transition: width var(--transition-normal);
+}
+
+.mk-card.is-button {
+  width: 100%;
+}
+
+.mk-thumb {
+  width: 56px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+
+.mk-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 700;
+}
+
+.mk-checks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.mk-checks .is-ok .mk-pill {
+  background: var(--accent-success);
+}
+
+.mk-checks .is-todo .mk-pill {
+  background: var(--accent-warning);
+  color: #1e293b;
+  text-shadow: none;
+}
+
+/* えらんだカードの そうさ。画面の下に はりつける */
+.mk-actionbar {
+  position: sticky;
+  bottom: 12px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border-strong);
+  background: rgba(60, 50, 120, 0.72);
+  backdrop-filter: var(--glass-blur-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+.mk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.45);
+  overflow-y: auto;
+}
+
+.mk-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 560px);
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border-strong);
+  background: rgba(90, 80, 170, 0.78);
+  backdrop-filter: var(--glass-blur-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  box-shadow: var(--glass-shadow-hover);
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.mk-canvas {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  background: #fff;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.mk-swatch {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+}
+
+.mk-swatch.is-on {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px var(--accent-warning);
+}
+
+.mk-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mk-preview li {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-light);
+}
+
+.mk-preview-picture {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--glass-border-strong);
+  font-size: 13px;
+  overflow: hidden;
+}
+
+.mk-preview-picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+}
+
+.mk-preview-keyword {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
 }
 
 .mk-stage-keyword {
