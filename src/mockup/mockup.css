@@ -1,0 +1,420 @@
+/* モックアップ用スタイル（グラスモルフィズム。index.css の --glass-* トークンを使う） */
+
+.mk-root,
+.mk-stage {
+  min-height: 100vh;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.mk-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--glass-bg-light);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.mk-acts {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 6px;
+  justify-content: center;
+}
+
+.mk-act,
+.mk-chip,
+.mk-btn,
+.mk-lane-head,
+.mk-card.is-button,
+.mk-mic {
+  font: inherit;
+  color: inherit;
+  text-shadow: inherit;
+  cursor: pointer;
+}
+
+.mk-act {
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-light);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mk-act.is-current,
+.mk-chip.is-on,
+.mk-btn.is-primary {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--accent-primary);
+  text-shadow: none;
+}
+
+.mk-badge {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.mk-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.mk-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+}
+
+.mk-center {
+  align-items: center;
+  text-align: center;
+}
+
+.mk-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.mk-h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.mk-step {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.mk-question {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.mk-why,
+.mk-note {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  opacity: 0.92;
+}
+
+.mk-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.mk-between {
+  justify-content: space-between;
+}
+
+.mk-tight {
+  gap: 6px;
+}
+
+.mk-grow {
+  flex: 1 1 240px;
+}
+
+.mk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-light);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mk-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 56px;
+  padding: 12px 22px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border-strong);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.mk-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.mk-mic {
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  border: 2px solid var(--glass-border-strong);
+  background: var(--glass-bg-strong);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+.mk-mic.is-recording {
+  background: rgba(239, 68, 68, 0.75);
+  animation: mk-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes mk-pulse {
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-mic.is-recording {
+    animation: none;
+  }
+}
+
+.mk-cards,
+.mk-cue,
+.mk-history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mk-cards.is-column,
+.mk-cue,
+.mk-history {
+  flex-direction: column;
+}
+
+.mk-card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 子どもの言葉のカード。読みやすさ優先で濃いガラスに濃い文字 */
+.mk-card,
+.mk-card.is-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border-strong);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text-on-glass);
+  text-shadow: none;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.mk-card .mk-pill {
+  color: #fff;
+  background: var(--accent-primary);
+}
+
+.mk-card.is-picked {
+  outline: 4px solid var(--accent-warning);
+  transform: translateY(-2px);
+}
+
+.mk-lanes {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 720px) {
+  .mk-lanes {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.mk-lane-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 2px dashed transparent;
+  background: transparent;
+  text-align: left;
+}
+
+.mk-lane-head:disabled {
+  cursor: default;
+}
+
+.mk-lane-head.is-target {
+  border-color: #fff;
+  background: var(--glass-bg);
+}
+
+.mk-timer {
+  margin: 0;
+  font-size: 44px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.mk-timer.is-small {
+  font-size: 22px;
+}
+
+.mk-feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-light);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.mk-feedback.is-good {
+  background: var(--accent-success-light);
+}
+
+.mk-feedback p {
+  margin: 0;
+}
+
+.mk-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 0;
+}
+
+.mk-stats > div {
+  padding: 10px;
+  border-radius: var(--radius-md);
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border);
+  text-align: center;
+}
+
+.mk-stats dt {
+  font-size: 13px;
+}
+
+.mk-stats dd {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.mk-history li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.mk-bar {
+  flex: 1 1 80px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+
+.mk-bar > span {
+  display: block;
+  height: 100%;
+  background: #fff;
+}
+
+/* ほんばん：紙芝居だけを大きく見せる */
+.mk-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.mk-stage-slide {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 24px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+}
+
+.mk-stage-picture {
+  display: grid;
+  place-items: center;
+  width: min(100%, 520px);
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--glass-border-strong);
+  background: var(--glass-bg-light);
+  font-size: 18px;
+}
+
+.mk-stage-keyword {
+  margin: 0;
+  font-size: clamp(32px, 7vw, 64px);
+  font-weight: 800;
+  text-align: center;
+}
