@@ -192,3 +192,15 @@ def test_property_valid_request_always_accepted(body):
     ok, msg = validate_request(body)
     assert ok is True
     assert msg == ""
+
+
+@pytest.mark.parametrize("step", [True, False, 1.0, 2.0, 3.0, "1"])
+def test_non_int_step_rejected(step):
+    """int 以外（bool・float・文字列）の current_step は値が等しくても拒否される。"""
+    body = {
+        "grade": "grade1",
+        "current_step": step,
+        "user_speech": "test",
+        "history": [],
+    }
+    assert validate_request(body) == (False, "invalid request")
