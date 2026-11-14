@@ -9,7 +9,7 @@ Bedrock 呼び出し・CORS ヘッダー・エラー処理）を検証する。
 from __future__ import annotations
 
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -35,6 +35,13 @@ MOCK_SLIDE_RESPONSE = {
     "marp_markdown": "",
     "presentation_guide": [],
 }
+
+
+@pytest.fixture(autouse=True)
+def _mock_rate_limiter():
+    """レート制限（SSM 参照）をモックし、実際の AWS へ接続しないようにする。"""
+    with patch("handler.check_and_increment", return_value=(True, 1)) as mock_check:
+        yield mock_check
 
 
 def _make_event(body: dict | None = None, method: str = "POST") -> dict:
@@ -165,12 +172,14 @@ class TestSuccessfulRequest:
 
     @patch("handler.invoke_claude", return_value=MOCK_SLIDE_RESPONSE)
     def test_bedrock_called_with_correct_model_id(self, mock_invoke):
-        """デフォルトモデル ID（環境変数未設定時は Claude 3 Haiku）が使用される。"""
+        """デフォルトモデル ID（環境変数未設定時は Claude Haiku 4.5 Japan 推論プロファイル）が使用される。"""
         event = _make_event(VALID_BODY)
         lambda_handler(event, None)
         call_kwargs = mock_invoke.call_args
-        assert call_kwargs.kwargs.get("model_id") == "anthropic.claude-3-haiku-20240307-v1:0" or \
-               call_kwargs.args[2] == "anthropic.claude-3-haiku-20240307-v1:0"
+        assert (
+            call_kwargs.kwargs.get("model_id")
+            == "jp.anthropic.claude-haiku-4-5-20251001-v1:0"
+        )
 
     @patch("handler.invoke_claude", return_value=MOCK_SLIDE_RESPONSE)
     def test_messages_include_history_and_user_speech(self, mock_invoke):
@@ -235,6 +244,35 @@ class TestBedrockError:
 
 
 # ---------------------------------------------------------------------------
+# Bedrock 月次呼び出し上限チェック
+# ---------------------------------------------------------------------------
+
+class TestRateLimit:
+    """月次呼び出し上限チェックの分岐を検証。"""
+
+    def test_limit_exceeded_returns_429_without_calling_bedrock(self, _mock_rate_limiter):
+        _mock_rate_limiter.return_value = (False, 1000)
+        with patch("handler.invoke_claude") as mock_invoke:
+            response = lambda_handler(_make_event(VALID_BODY), None)
+        assert response["statusCode"] == 429
+        assert "error" in json.loads(response["body"])
+        mock_invoke.assert_not_called()
+
+    def test_limit_check_failure_returns_500_without_calling_bedrock(self, _mock_rate_limiter):
+        _mock_rate_limiter.side_effect = Exception("SSM unavailable")
+        with patch("handler.invoke_claude") as mock_invoke:
+            response = lambda_handler(_make_event(VALID_BODY), None)
+        assert response["statusCode"] == 500
+        assert "Rate limit check failed" in json.loads(response["body"])["error"]
+        mock_invoke.assert_not_called()
+
+    @patch("handler.invoke_claude", return_value=MOCK_SLIDE_RESPONSE)
+    def test_limit_checked_once_per_request(self, mock_invoke, _mock_rate_limiter):
+        lambda_handler(_make_event(VALID_BODY), None)
+        _mock_rate_limiter.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
 # システムプロンプト構造（要件 4.3, 5.x）
 # ---------------------------------------------------------------------------
 
@@ -258,7 +296,7 @@ class TestSystemPromptStructure:
         lambda_handler(event, None)
         call_kwargs = mock_invoke.call_args
         prompt = call_kwargs.kwargs.get("prompt") or call_kwargs.args[0]
-        assert "step 1" in prompt
+        assert "【Step 1:" in prompt
 
     @patch("handler.invoke_claude", return_value=MOCK_SLIDE_RESPONSE)
     def test_prompt_step3_contains_script_instruction(self, mock_invoke):

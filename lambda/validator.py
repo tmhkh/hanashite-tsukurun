@@ -38,7 +38,9 @@ def validate_request(body: dict) -> tuple[bool, str]:
         return False, "invalid request"
 
     # current_step の値域チェック
-    if body["current_step"] not in VALID_STEPS:
+    # bool は int のサブクラス、1.0 == 1 も True になるため型を厳密に確認する
+    step = body["current_step"]
+    if type(step) is not int or step not in VALID_STEPS:
         return False, "invalid request"
 
     return True, ""
