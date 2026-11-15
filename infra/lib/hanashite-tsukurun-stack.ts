@@ -66,7 +66,6 @@ export class HanashiteTsukurunStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
-    cdk.Tags.of(websiteBucket).add('name', `${stackName}-website`);
 
     // ========================================
     // CloudFront Distribution
@@ -95,7 +94,6 @@ export class HanashiteTsukurunStack extends cdk.Stack {
         },
       ],
     });
-    cdk.Tags.of(this.distribution).add('name', `${stackName}-cdn`);
 
     // Route 53 A レコード (hanashite.<domainName> → CloudFront)
     new route53.ARecord(this, 'CloudFrontAliasRecord', {
@@ -128,7 +126,6 @@ export class HanashiteTsukurunStack extends cdk.Stack {
         RATE_LIMIT_PARAM_PREFIX: `/${stackName}/bedrock-invoke-count`,
       },
     });
-    cdk.Tags.of(this.lambdaFunction).add('name', `${stackName}-slide-api-handler`);
 
     // Grant Bedrock InvokeModel permission
     this.lambdaFunction.addToRolePolicy(new iam.PolicyStatement({
@@ -155,7 +152,6 @@ export class HanashiteTsukurunStack extends cdk.Stack {
         allowHeaders: ['Content-Type', 'Authorization'],
       },
     });
-    cdk.Tags.of(this.httpApi).add('name', `${stackName}-api`);
 
     // Cognito JWT Authorizer (共有 User Pool を参照)
     const authorizer = new HttpUserPoolAuthorizer(`${stackName}-cognito-authorizer`, userPool, {
