@@ -10,7 +10,7 @@ const stackName = app.node.tryGetContext('stackName') || 'hanashite-tsukurun';
 const stack = new HanashiteTsukurunStack(app, stackName, {
   description: 'はなして・つくるん - Secure Deployment Stack',
   env: {
-    account: process.env.CDK_DEFAULT_ACCOUNT || 'REDACTED_ACCOUNT_ID',
+    account: process.env.CDK_DEFAULT_ACCOUNT,
     region: process.env.CDK_DEFAULT_REGION || 'ap-northeast-1',
   },
 });
