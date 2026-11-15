@@ -15,5 +15,5 @@ const stack = new HanashiteTsukurunStack(app, stackName, {
   },
 });
 
-// スタック内の全リソースに name:hanashite タグを付与
-cdk.Tags.of(stack).add('name', 'hanashite');
+// スタック内の全リソースに name:hanashite-tsukurun タグを付与
+cdk.Tags.of(stack).add('name', 'hanashite-tsukurun');
